@@ -22,6 +22,16 @@ class TaskRepository(BaseRepository):
         return tasks
 
 
+    async def get_type_tasks(self, name):
+        tasks = await self.model.find(Task.user == name).to_list()
+        type_tasks = set()
+
+        for task in tasks:
+            type_tasks.add(task.type)
+
+        return list(type_tasks)
+
+
     async def get_user_tasks_by_type(self, name, type):
         # get user tasks by filters and type
         tasks = await self.model.find(

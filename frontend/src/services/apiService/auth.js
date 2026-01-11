@@ -64,7 +64,6 @@ export const login = async (creds) => {
 export const register = async (creds) => {
   try {
     const res = await api.post("/register", creds.formData)
-    console.log(res);
 
     creds.successSubmit();
   } catch (errors) {

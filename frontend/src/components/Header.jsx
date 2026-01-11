@@ -11,7 +11,6 @@ export default function Header() {
   const checkAuth = async () => {
     const res = await getAuth();
     setAuth(res.auth);
-    console.log(res)
   }
 
   const logoutUser = async () => {

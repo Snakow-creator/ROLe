@@ -29,5 +29,4 @@ def load_security_handle_errors(app: FastAPI):
 @security.set_subject_getter
 def get_user_from_uid(uid: str) -> User:
     user = users.find_one({"name": uid})
-    print("UID FROM TOKEN:", repr(uid), user)
     return user

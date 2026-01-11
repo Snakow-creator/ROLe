@@ -1,7 +1,7 @@
 import api from "./api";
 
 
-export const getTasks = async(creds) => {
+export const getTasks = async (creds) => {
   try {
     const res = await api.get("/tasks");
     creds.onFinish(res.data);
@@ -28,35 +28,35 @@ export async function addTask(formData) {
 
 export async function completeTask(creds) {
   try {
-      const res = await api.put(`/complete/task/${creds.id}`, {});
-      creds.onCompleteTask(res)
-
-      return res
-    } catch (error) {
-      creds.onError(error)
-    }
-}
-
-
-export async function uncompleteTask(creds) {
-  try {
-    const res = await api.put(`/uncomplete/task/${creds.id}`, {});
-    creds.onUncompleteTask(res)
+    const res = await api.put(`/complete/task/${creds.id}`, {});
+    // creds.onCompleteTask(res) уведомления
 
     return res
   } catch (error) {
-    creds.onError(error)
+    // creds.onError(error) уведомления
+  }
+}
+
+
+export async function unCompleteTask(creds) {
+  try {
+    const res = await api.put(`/uncomplete/task/${creds.id}`, {});
+    // creds.onUncompleteTask(res) уведомления
+
+    return res
+  } catch (error) {
+    // creds.onError(error) уведомления
   }
 }
 
 
 export async function deleteTask(creds) {
   try {
-      const res = await api.delete(`/delete/task/${creds.id}`);
-      creds.onDeleteTask(res.data.title);
+    const res = await api.delete(`/delete/task/${creds.id}`);
+    creds.onDeleteTask(res.data.title);
 
-      return res
-    } catch (error) {
-      creds.onError(error)
-    }
+    return res
+  } catch (error) {
+    creds.onError(error)
+  }
 }

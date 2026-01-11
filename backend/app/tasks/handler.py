@@ -21,8 +21,9 @@ async def tasks(
     user: User = Depends(security.get_current_subject),
 ):
     tasks = await task_repo.get_user_tasks(user["name"])
+    type_tasks = await task_repo.get_type_tasks(user['name'])
 
-    return tasks
+    return {"message": "Success", "tasks": tasks, "type_tasks": type_tasks}
 
 
 @router.post("/add/task", dependencies=[Depends(security.access_token_required)])

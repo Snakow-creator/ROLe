@@ -16,14 +16,20 @@ export default function App() {
     <div>
       <Header />
 
-      <main className='mt-2 lg:w-[70%] md:w-[80%] sm-[90%] mx-auto text-center'>
+      <main>
+        
+        <div className='mt-2 lg:w-[70%] md:w-[80%] sm-[90%] mx-auto text-center'>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/profile" element={<Profile />} />
+          </Routes>
+        </div>
+
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/tasks" element={<Tasks />} />
           <Route path="/add/task" element={<AddTask />} />
+          <Route path="/tasks" element={<Tasks />} />
           <Route path="/items" element={<Items />} />
         </Routes>
       </main>
