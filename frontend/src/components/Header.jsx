@@ -27,7 +27,7 @@ export default function Header() {
       // navigation, near right with logo
       <nav className="flex items-center space-x-8">
         <h3><Link to="/add/task" className="font-bold text-lg">добавить задачу</Link></h3>
-        <h3><Link to="/tasks" className='font-bold text-lg'>мои задачи</Link></h3>
+        <h3><Link to="/tasks" className='font-bold text-lg'>мои квесты</Link></h3>
         <h3><Link to="/items" className='font-bold text-lg'>магазин</Link></h3>
       </nav>
     )
@@ -43,7 +43,7 @@ export default function Header() {
             <Link to="/profile" className='absolute w-10 h-10 rounded-full'></Link>
           </h3>
           <button className='cursor-pointer w-[30px] h-[30px]' onClick={logoutUser}>
-          <img src="/header/logout.svg"/>
+            <img src="/header/logout.svg"/>
           </button>
         </>
       )
