@@ -3,6 +3,7 @@ import { register } from "../services/apiService/auth";
 
 import { MessageError } from "../components/Message";
 import Button from "../components/Button";
+import Container from "../components/Container";
 
 
 function InputPassword({ name, placeholder, value, onChange }) {
@@ -93,38 +94,40 @@ export default function Register() {
 
 
   return (
-    <div className="container md:w-[50%] mx-auto rounded-2xl lg:mt-16 mt-4 py-4 bg-white shadow-sm">
-      <h1 className="text-3xl font-extrabold">Регистрация</h1>
+    <Container>
+      <div className="container md:w-[50%] mx-auto rounded-2xl lg:mt-16 mt-4 py-4 bg-white shadow-sm">
+        <h1 className="text-3xl font-extrabold">Регистрация</h1>
 
-      <form onSubmit={handleSubmit} className="mt-4 space-y-2">
-        <input
-          type="text"
-          placeholder="Ник"
-          className="block mx-auto border rounded px-1 py-0.5"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-        />
+        <form onSubmit={handleSubmit} className="mt-4 space-y-2">
+          <input
+            type="text"
+            placeholder="Ник"
+            className="block mx-auto border rounded px-1 py-0.5"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+          />
 
-        { messageNameError }
+          {messageNameError}
 
-        <InputPassword
-          name="password1"
-          placeholder="Пароль"
-          value={formData.password1}
-          onChange={handleChange} />
+          <InputPassword
+            name="password1"
+            placeholder="Пароль"
+            value={formData.password1}
+            onChange={handleChange} />
 
-        <InputPassword
-          name="password2"
-          placeholder="Подтвердите пароль"
-          value={formData.password2}
-          onChange={handleChange} />
+          <InputPassword
+            name="password2"
+            placeholder="Подтвердите пароль"
+            value={formData.password2}
+            onChange={handleChange} />
 
-        { messagePasswordError }
+          {messagePasswordError}
 
-        <Button type="submit" isDone={true}>Зарегистрироваться</Button>
-        {message && <p className="text-green-600 text-bold">{message}</p>}
-      </form>
-    </div>
+          <Button type="submit" isDone={true}>Зарегистрироваться</Button>
+          {message && <p className="text-green-600 text-bold">{message}</p>}
+        </form>
+      </div>
+    </Container>
   );
 }

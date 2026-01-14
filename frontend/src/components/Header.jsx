@@ -26,8 +26,7 @@ export default function Header() {
     setNavigation(auth &&
       // navigation, near right with logo
       <nav className="flex items-center space-x-8">
-        <h3><Link to="/add/task" className="font-bold text-lg">добавить задачу</Link></h3>
-        <h3><Link to="/tasks" className='font-bold text-lg'>мои квесты</Link></h3>
+        <h3><Link to="/quests" className='font-bold text-lg'>мои квесты</Link></h3>
         <h3><Link to="/items" className='font-bold text-lg'>магазин</Link></h3>
       </nav>
     )

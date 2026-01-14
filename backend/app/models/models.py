@@ -85,7 +85,7 @@ class Item(Document):
 
 class Task(Document):
     # основные данные
-    title: str = Field(max_length=100, description="Название квеста")
+    title: str = Field(min_length=1, max_length=100, description="Название квеста")
     description: str = Field(max_length=255, description="Описание квеста")
     type: str = Field(description="Тип квеста")
     user: str = Field(description="Пользователь, который зарегистрировал квест")

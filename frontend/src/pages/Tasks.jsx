@@ -145,7 +145,6 @@ function Task(creds) {
   const [isSubmit, setIsSubmit] = useState(false);
   const [trashSrc, setTrashSrc] = useState("/task/trash.png");
 
-
   function visibleSubmit() {
     setShowSubmit(true);
     setClassTitle("transform transition-transform duration-400 translate-x-5 sm:w-48");
@@ -159,22 +158,24 @@ function Task(creds) {
   const submitTask = async () => {
     if (isSubmit) {
       setIsSubmit(false);
-      unCompleteTask({
+      await unCompleteTask({
         id: creds.id
       })
     } else {
       setIsSubmit(true);
-      completeTask({
+      await completeTask({
         id: creds.id
       })
     }
   }
 
-  const delTask = async() => {
-    setTrashSrc("/task/trash_active.png");
-    deleteTask({
+  const delTask = async () => {
+    setTrashSrc("/task/trash_hover.png");
+    await deleteTask({
       id: creds.id
     })
+
+    creds.onUpdate();
   }
 
   return (
@@ -196,21 +197,21 @@ function Task(creds) {
       <span className={cn(
         "truncate sm:w-52 z-10",
         classTitle
-        )}>
+      )}>
         {creds.title}
       </span>
 
       {/* trash button */}
       <button
         className={cn("absolute right-2 z-[10000] transition-opacity duration-300 cursor-pointer h-[25px] w-[25px]",
-          showSubmit ? "opacity-100": "opacity-0 pointer-events-none"
+          showSubmit ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
-        onMouseEnter={() => {setTrashSrc("/task/trash_hover.png")}}
-        onMouseLeave={() => {setTrashSrc("/task/trash.png")}}
-        onMouseDown={delTask}
-        onMouseUp={() => {setTrashSrc("/task/trash_hover.png")}}>
+        onMouseEnter={() => { setTrashSrc("/task/trash_hover.png") }}
+        onMouseLeave={() => { setTrashSrc("/task/trash.png") }}
+        onMouseDown={() => { setTrashSrc("/task/trash_active.png") }}
+        onClick={delTask}>
 
-          <img src={trashSrc} />
+        <img src={trashSrc} />
       </button>
     </div>
   )
@@ -238,6 +239,10 @@ function CanbanDesk(creds) {
     }
   }, [isFormCreateTask])
 
+  const onClickCancelButton = () => {
+    setIsFormCreateTask(false);
+  }
+
   return (
     <div
       className={cn(
@@ -252,7 +257,11 @@ function CanbanDesk(creds) {
           {creds.tasks
             .filter(task => task.type === creds.type)
             .map(({ _id, title, description }) => (
-              <Task key={_id} id={_id} title={title} description={description} />
+              <Task key={_id}
+                    id={_id}
+                    title={title}
+                    description={description}
+                    onUpdate={creds.onUpdate}/>
             ))
           }
         </div>
@@ -261,19 +270,21 @@ function CanbanDesk(creds) {
         {
           isFormCreateTask ? (
             <div ref={formCreateTaskRef}
-                  onClick={e => {
-                    if (e.target === e.currentTarget) {
-                      setIsFormCreateTask(false)
-                    }
-                  }}>
+              onClick={e => {
+                if (e.target === e.currentTarget) {
+                  setIsFormCreateTask(false)
+                }
+              }}>
               <FormCreateTask
+                onClickCancelButton={onClickCancelButton}
+                onUpdate={creds.onUpdate}
                 type={creds.type} />
             </div>
           ) : (
             <button
               className="mt-2 text-[#7C8AA0] p-1 pl-2 w-full rounded-md text-left cursor-pointer hover:bg-[#EEF2F7] active:bg-[#E5E9F0]"
               type="button"
-              onClick={() => { setIsFormCreateTask(true)}}>
+              onClick={() => { setIsFormCreateTask(true) }}>
               ＋ Добавить квест
             </button>
           )
@@ -290,36 +301,32 @@ export default function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [typeTasks, setTypeTasks] = useState([]);
 
-  useEffect(() => {
-    const onFinish = data => {
-      setTasks(data.tasks);
-      setTypeTasks(data.type_tasks);
-    }
+  const fetchTasks = async () => {
+    await getTasks({onFinish: data => {
+        setTasks(data.tasks);
+        setTypeTasks(data.type_tasks);
+      }
+     });
+  }
 
-    getTasks({ onFinish });
+  useEffect(() => {
+    fetchTasks();
   }, []);
 
-  console.log(typeTasks)
+  const handleUpdate = async () => {
+    fetchTasks();
+  }
+
   return (
     <div className="flex items-start ml-2 mt-4 space-x-3">
       {typeTasks.map(type => (
         <CanbanDesk
+          key={type}
           title={quests_types[type]}
           type={type}
-          tasks={tasks} />
+          tasks={tasks}
+          onUpdate={handleUpdate}/>
       ))}
-      {/* <div className="space-y-4">
-       {tasks.map((task, index) => (
-          <Task
-            key={task._id}
-            id={task._id}
-            index={index}
-            title={task.title}
-            description={task.description}
-            type={task.type}
-          />
-        ))}
-      </div> */}
     </div>
   );
 };
