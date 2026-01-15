@@ -1,53 +1,59 @@
 import Button from "../components/Button";
-import { useState, useEffect } from "react";
-import { fetchBuyItem, fetchItems } from "../services/apiService/items";
+import Container from "../components/Container";
+
 import { useRef } from "react";
+import { useState, useEffect } from "react";
+
+import { fetchBuyItem, fetchItems } from "../services/apiService/items";
+import { cn } from "../hooks/utils";
 
 
-function Item({ id, index, title, description, price, type }) {
-  const [message, setMessage] = useState('');
-  const counter = useRef({});
+function Item(creds) {
+  const [showSubmit, setShowSubmit] = useState(false);
 
-  const purchaseItem = async () => {
-    const res = await fetchBuyItem(id);
-    const title = res.data.title;
-
-    if (!counter.current[title]) {
-      counter.current[title] = 0;
-    }
-
-    counter.current[title]++;
-
-    if (counter.current[title] > 1) {
-      setMessage(`${res.data.message} x${counter.current[title]}`);
-    } else {
-      setMessage(res.data.message);
-    }
-
+  const visibleSubmit = () => {
+    setShowSubmit(true);
   }
 
+  const hideSubmit = () => {
+    setShowSubmit(false);
+  }
+
+  const buyItem = async () => {
+    const res = await fetchBuyItem(creds.id);
+
+    console.log(res);
+  }
+
+
+
   return (
-    <div>
-      <p className="font-bold text-lg">
-        {index}. {title}
-      </p>
+    <div
+      className="relative flex items-center space-x-1 bg-[#ffffff] text-lg rounded-xl px-6 py-3 w-full border border-[#F1F1F1] hover:outline-2 hover:outline-blue-400 box-border shadow transition-transform"
+      onMouseEnter={() => { visibleSubmit() }}
+      onMouseLeave={() => { hideSubmit() }}>
 
-      <p className="font-bold">
-        Тип: {type}
-      </p>
+      <span className="font-bold">
+        {creds.index}.
+      </span>
 
-      <p className="font-sans">{description}</p>
+      <span>
+        {creds.title}
+      </span>
 
-      <p>
-        Цена: {price}
-      </p>
+      <span className={cn(
+        "absolute right-6 font-bold transition-opacity",
+        showSubmit ? "opacity-0 pointer-events-none" : "opacity-100"
+        )}>
+        {creds.price.toFixed(1)}
+      </span>
 
-      {message && <p>{message}</p>}
-
-      <Button
-        onClick={purchaseItem}
-        type='button'>
-        Приобрести
+      <Button className={cn(
+        "absolute right-6 font-bold transition-opacity duration-500",
+        showSubmit ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={buyItem}>
+        приобрести
       </Button>
     </div>
   )
@@ -65,9 +71,13 @@ export default function Items() {
   }, []);
 
   return (
-    <>
-      <h1 className="text-2xl font-extrabold">Магазин услуг</h1>
-      <div className="space-y-4">
+    <Container>
+      <div className="container bg-[#F9FAFE] mt-16 mx-auto w-[800px] rounded-2xl py-8 px-8 shadow border border-[#E5E9F0]">
+        <h1 className="text-2xl font-bold">
+          Магазин услуг
+        </h1>
+
+      <div className="space-y-4 mt-8">
         {items.map((item, index) => (
           <Item
             key={item._id}
@@ -80,6 +90,23 @@ export default function Items() {
           />
         ))}
       </div>
-    </>
+
+
+      </div>
+      {/* <h1 className="text-2xl font-extrabold">Магазин услуг</h1>
+      <div className="space-y-4">
+        {items.map((item, index) => (
+          <Item
+            key={item._id}
+            id={item._id}
+            index={index + 1}
+            title={item.title}
+            description={item.description}
+            price={item.price}
+            type={item.type}
+          />
+        ))}
+      </div> */}
+    </Container>
   );
 }
