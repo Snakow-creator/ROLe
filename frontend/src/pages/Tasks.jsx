@@ -4,7 +4,7 @@ import FormCreateTask from "../components/FormCreateTask";
 import { getTasks, completeTask, unCompleteTask, deleteTask } from "../services/apiService/tasks";
 
 import { cn } from "../hooks/utils";
-import { quests_types } from "../hooks/data";
+import { quests_types } from "../data/data";
 
 
 function Task(creds) {

@@ -1,7 +1,6 @@
 import Button from "../components/Button";
 import Container from "../components/Container";
 
-import { useRef } from "react";
 import { useState, useEffect } from "react";
 
 import { fetchBuyItem, fetchItems } from "../services/apiService/items";
@@ -60,15 +59,37 @@ function Item(creds) {
 }
 
 export default function Items() {
+  const [allItems, setAllItems] = useState([]);
   const [items, setItems] = useState([]);
 
   useEffect(() => {
     const setCurrentItems = (data) => {
       setItems(data);
+      setAllItems(data);
     }
 
     fetchItems(setCurrentItems);
   }, []);
+
+  const onChangeFilter = (e) => {
+    setItems(
+      e.target.value == "all"
+      ? allItems
+      : allItems.filter(item => item.type === e.target.value)
+    );
+  };
+
+  const onChangeSort = (e) => {
+    if (e.target.value == "popular") {
+      setItems(allItems);
+      return;
+    }
+    setItems(
+      e.target.value == "asc"
+      ? [...allItems].sort((a, b) => a.price - b.price)
+      : [...allItems].sort((a, b) => b.price - a.price)
+    )
+  }
 
   return (
     <Container>
@@ -77,7 +98,60 @@ export default function Items() {
           Магазин услуг
         </h1>
 
-      <div className="space-y-4 mt-8">
+      <div className="flex items-center space-x-4 mt-2">
+        {/* filter by type task */}
+        <div className="relative inline-block">
+          <select className="bg-white appearance-none px-2 pl-3 w-24 rounded-md border border-[#E8E8E8] hover:bg-[#F1F1F1] active:bg-[#E8E8E8] shadow"
+                  onChange={ onChangeFilter }>
+            <option value="all">
+              Все
+            </option>
+            <option value="rest">
+              Отдых
+            </option>
+            <option value="money">
+              Деньги
+            </option>
+            <option value="food">
+              Еда
+            </option>
+          </select>
+          <div className="pointer-events-none text-sm absolute right-2 inset-y-0 text-gray-600 flex items-center">
+            ▼
+          </div>
+        </div>
+
+        {/* sort by price */}
+        <div className="relative inline-block">
+          <select className="bg-white appearance-none px-2 pl-3 w-48 rounded-md border border-[#E8E8E8] hover:bg-[#F1F1F1] active:bg-[#E8E8E8] shadow text-normal"
+                  onChange={ onChangeSort }>
+            <option value="popular">
+              Популярные
+            </option>
+            <option value="asc">
+              По возрастанию
+            </option>
+            <option value="desc">
+              По убыванию
+            </option>
+          </select>
+          <div className="pointer-events-none text-sm absolute right-2 inset-y-0 text-gray-600 flex items-center">
+            ▼
+          </div>
+        </div>
+
+      </div>
+
+      <hr className="mt-4 shadow-xs" />
+
+      <div className="space-y-4 mt-4">
+        <button
+          className="relative flex items-center space-x-1 bg-[#ffffff] text-[#67748A] cursor-pointer font-bold shadow text-lg rounded-xl px-6 py-3 w-full border border-[#F1F1F1] hover:bg-[#F7F7F7] active:bg-[#F1F1F1]"
+          type="button"
+          onClick={() => {}}>
+            ＋ Добавить услугу
+        </button>
+
         {items.map((item, index) => (
           <Item
             key={item._id}
