@@ -1,4 +1,6 @@
-import { useRef, useEffect, use } from "react"
+import { useRef, useEffect } from "react"
+
+import { cn } from "../hooks/utils";
 
 function useAutoResizeTextArea(creds) {
   const ref = useRef(null);
@@ -23,17 +25,18 @@ function useAutoResizeTextArea(creds) {
 
 export default function Textarea (creds) {
 
-  const ref = useAutoResizeTextArea({focus: creds.focus, name: creds.name});
+  const ref = useAutoResizeTextArea({focus: creds.focus, value: creds.value});
 
   return (
     <textarea
-      ref={ref}
-      rows="1"
-      onChange={creds.onChange}
-      name={creds.name}
-      placeholder={creds.placeholder}
-      maxLength={creds.maxLength}
-      className={creds.className}>
+    ref={ref}
+    rows="1"
+    onChange={creds.onChange}
+    name={creds.name}
+    value={creds.value}
+    placeholder={creds.placeholder}
+    className={creds.className}
+    maxLength={creds.maxLength}>
     </textarea>
   )
 }

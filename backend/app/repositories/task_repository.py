@@ -33,7 +33,7 @@ class TaskRepository(BaseRepository):
 
         type_tasks = list(type_tasks)
         type_tasks.sort(key=lambda x: tasks_sort[x])
-        print(type_tasks)
+        
         return type_tasks
 
 

@@ -1,10 +1,11 @@
 import Button from "../components/Button";
 import Container from "../components/Container";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { fetchBuyItem, fetchItems } from "../services/apiService/items";
 import { cn } from "../hooks/utils";
+import FormCreateItem from "../components/forms/FormCreateItem";
 
 
 function Item(creds) {
@@ -61,6 +62,10 @@ function Item(creds) {
 export default function Items() {
   const [allItems, setAllItems] = useState([]);
   const [items, setItems] = useState([]);
+  const formCreateItemRef = useRef(null);
+
+  const [isFormCreateItem, setIsFormCreateItem] = useState(false);
+  const [name, setName] = useState("");
 
   useEffect(() => {
     const setCurrentItems = (data) => {
@@ -69,7 +74,22 @@ export default function Items() {
     }
 
     fetchItems(setCurrentItems);
+
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (formCreateItemRef.current && !formCreateItemRef.current.contains(e.target)) {
+        setIsFormCreateItem(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isFormCreateItem]);
 
   const onChangeFilter = (e) => {
     setItems(
@@ -144,13 +164,26 @@ export default function Items() {
 
       <hr className="mt-4 shadow-xs" />
 
+      {/* create item */}
       <div className="space-y-4 mt-4">
-        <button
-          className="relative flex items-center space-x-1 bg-[#ffffff] text-[#67748A] cursor-pointer font-bold shadow text-lg rounded-xl px-6 py-3 w-full border border-[#F1F1F1] hover:bg-[#F7F7F7] active:bg-[#F1F1F1]"
-          type="button"
-          onClick={() => {}}>
-            ＋ Добавить услугу
-        </button>
+        {
+          isFormCreateItem
+            ? (
+              <div ref={formCreateItemRef}
+                onClick={e => {
+                  e.target === e.currentTarget && setIsFormCreateItem(false);
+                }}>
+                <FormCreateItem />
+              </div>
+            ) : (
+              <button
+                className="relative flex items-center space-x-1 bg-[#ffffff] text-[#67748A] cursor-pointer font-bold shadow text-lg rounded-xl px-6 py-3 w-full border border-[#F1F1F1] hover:bg-[#F7F7F7] active:bg-[#F1F1F1]"
+                type="button"
+                onClick={() => setIsFormCreateItem(true)}>
+                  ＋ Добавить услугу
+              </button>
+            )
+        }
 
         {items.map((item, index) => (
           <Item
@@ -167,20 +200,6 @@ export default function Items() {
 
 
       </div>
-      {/* <h1 className="text-2xl font-extrabold">Магазин услуг</h1>
-      <div className="space-y-4">
-        {items.map((item, index) => (
-          <Item
-            key={item._id}
-            id={item._id}
-            index={index + 1}
-            title={item.title}
-            description={item.description}
-            price={item.price}
-            type={item.type}
-          />
-        ))}
-      </div> */}
     </Container>
   );
 }

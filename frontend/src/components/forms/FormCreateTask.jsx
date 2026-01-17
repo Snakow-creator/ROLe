@@ -1,10 +1,10 @@
-import Textarea from "./Textarea"
-import Button from "./Button"
+import Textarea from "../Textarea"
+import Button from "../Button"
 
-import { addTask } from "../services/apiService/tasks"
+import { addTask } from "../../services/apiService/tasks"
 
 import { useState } from "react"
-import { useLocation, useNavigate } from "react-router"
+
 
 export default function FormCreateTask(creds) {
   const [formData, setFormData] = useState({

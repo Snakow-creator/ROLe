@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-import FormCreateTask from "../components/FormCreateTask";
+import FormCreateTask from "../components/forms/FormCreateTask";
 import { getTasks, completeTask, unCompleteTask, deleteTask } from "../services/apiService/tasks";
 
 import { cn } from "../hooks/utils";
@@ -128,10 +128,10 @@ function CanbanDesk(creds) {
             .filter(task => task.type === creds.type)
             .map(({ _id, title, description }) => (
               <Task key={_id}
-                    id={_id}
-                    title={title}
-                    description={description}
-                    onUpdate={creds.onUpdate}/>
+                id={_id}
+                title={title}
+                description={description}
+                onUpdate={creds.onUpdate} />
             ))
           }
         </div>
@@ -172,11 +172,12 @@ export default function Tasks() {
   const [typeTasks, setTypeTasks] = useState([]);
 
   const fetchTasks = async () => {
-    await getTasks({onFinish: data => {
+    await getTasks({
+      onFinish: data => {
         setTasks(data.tasks);
         setTypeTasks(data.type_tasks);
       }
-     });
+    });
   }
 
   useEffect(() => {
@@ -195,7 +196,7 @@ export default function Tasks() {
           title={quests_types[type]}
           type={type}
           tasks={tasks}
-          onUpdate={handleUpdate}/>
+          onUpdate={handleUpdate} />
       ))}
     </div>
   );
