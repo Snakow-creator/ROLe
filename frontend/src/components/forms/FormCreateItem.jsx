@@ -13,21 +13,23 @@ export default function FormCreateItem(creds) {
     description: "",
     min_level: 0,
     price: 0,
-    type: "",
+    type: "type",
     creator: creds.name,
   })
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log(formData)
     setFormData((prev) => ({
       ...prev, [name]: value
     }))
   }
 
   const onSubmit = async (e) => {
+    e.preventDefault();
     await addItem(formData);
+    creds.onUpdate();
   }
+
 
   return (
     <form onSubmit={onSubmit}>
@@ -48,7 +50,7 @@ export default function FormCreateItem(creds) {
           value={formData.type}
           onChange={handleChange}
           className="sm:h-8">
-            <option value="" selected disabled>
+            <option value="type" disabled>
               Тип задачи
             </option>
             <option value="rest">

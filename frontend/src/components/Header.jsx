@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
 import { logout, getAuth } from '../services/apiService/auth';
+import LinkHeader from './LinkHeader';
 
 export default function Header() {
   const [bar, setBar] = useState(<></>);
@@ -26,8 +27,8 @@ export default function Header() {
     setNavigation(auth &&
       // navigation, near right with logo
       <nav className="flex items-center space-x-8">
-        <h3><Link to="/quests" className='font-bold text-lg'>мои квесты</Link></h3>
-        <h3><Link to="/items" className='font-bold text-lg'>магазин</Link></h3>
+        <LinkHeader to="/quests">мои квесты</LinkHeader>
+        <LinkHeader to="/items">магазин</LinkHeader>
       </nav>
     )
   }
@@ -49,8 +50,8 @@ export default function Header() {
     } else {
       setBar(
         <>
-          <h3><Link to="/login" className='font-bold text-lg'>войти</Link></h3>
-          <h3><Link to="/register" className='font-bold text-lg'>регистрация</Link></h3>
+          <LinkHeader to="/register">регистрация</LinkHeader>
+          <LinkHeader to="/login">войти</LinkHeader>
         </>
       )
     }

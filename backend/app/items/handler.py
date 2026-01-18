@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import HTTPException
 
 from models.models import User
 from models.schemas import ItemSchema
@@ -32,10 +33,12 @@ async def handler_add_item(
     creds: ItemSchema,
     user: User = Depends(security.get_current_subject),
 ):
+    print(creds)
+
     if creds.title == "":
-        return JSONResponse(
+        raise HTTPException(
             status_code=401,
-            content={"message": "Invalid title", "field": "title", "error": "Invalid title"}
+            detail={"message": "Invalid title", "field": "title", "error": "Invalid title"}
         )
 
     try:
@@ -47,16 +50,26 @@ async def handler_add_item(
             "price": float(creds.price),
             "min_level": int(creds.min_level)
         }
+
+        if creds.min_level == 0:
+            data["min_level"] = 1
+
     except (ValueError, TypeError):
-        return JSONResponse(
+        raise HTTPException(
             status_code=422,
-            content={"message": "Invalid price or float", "error": "Invalid price or float"}
+            detait={"message": "Invalid price or float", "error": "Invalid price or float"}
         )
 
     if data["price"] <= 0:
-        return JSONResponse(
+        raise HTTPException(
             status_code=401,
-            content={"message": "Invalid price", "field": "price", "error": "Invalid price"}
+            detail={"message": "Invalid price", "field": "price", "error": "Invalid price"}
+        )
+
+    elif data["min_level"] <= 0:
+        raise HTTPException(
+            status_code=401,
+            detail={"message": "Invalid min_level", "field": "min_level", "error": "Invalid min_level"}
         )
 
     await shop_items_repo.insert_item(data)
@@ -77,7 +90,7 @@ async def handler_delete_item(
             content={"message": "Unauthorized name", "error": "Unauthorized name"}
         )
 
-    await shop_items_repo.delete(id)
+    await shop_item.delete()
 
     return {"message": "Item deleted"}
 

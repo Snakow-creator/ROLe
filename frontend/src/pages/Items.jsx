@@ -4,12 +4,15 @@ import Container from "../components/Container";
 import { useState, useEffect, useRef } from "react";
 
 import { fetchBuyItem, fetchItems } from "../services/apiService/items";
+import { addItem, deleteItem } from "../services/apiService/items";
 import { cn } from "../hooks/utils";
 import FormCreateItem from "../components/forms/FormCreateItem";
 
 
 function Item(creds) {
   const [showSubmit, setShowSubmit] = useState(false);
+
+  const [trashSrc, setTrashSrc] = useState("/task/trash.png");
 
   const visibleSubmit = () => {
     setShowSubmit(true);
@@ -20,18 +23,23 @@ function Item(creds) {
   }
 
   const buyItem = async () => {
-    const res = await fetchBuyItem(creds.id);
-
-    console.log(res);
+    await fetchBuyItem(creds.id);
   }
 
+  const delItem = async (e) => {
+    setTrashSrc("/task/trash_hover.png");
 
+    e.preventDefault();
+    await deleteItem(creds.id);
+    creds.onUpdate();
+  }
 
   return (
     <div
       className="relative flex items-center space-x-1 bg-[#ffffff] text-lg rounded-xl px-6 py-3 w-full border border-[#F1F1F1] hover:outline-2 hover:outline-blue-400 box-border shadow transition-transform"
       onMouseEnter={() => { visibleSubmit() }}
       onMouseLeave={() => { hideSubmit() }}>
+
 
       <span className="font-bold">
         {creds.index}.
@@ -49,12 +57,24 @@ function Item(creds) {
       </span>
 
       <Button className={cn(
-        "absolute right-6 font-bold transition-opacity duration-500",
+        "absolute right-14 font-bold transition-opacity duration-500",
         showSubmit ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={buyItem}>
         приобрести
       </Button>
+      {/* trash button */}
+      <button
+        className={cn("absolute right-6 z-[10000] transition-opacity duration-300 cursor-pointer h-[25px] w-[25px]",
+          showSubmit ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onMouseEnter={() => { setTrashSrc("/task/trash_hover.png") }}
+        onMouseLeave={() => { setTrashSrc("/task/trash.png") }}
+        onMouseDown={() => { setTrashSrc("/task/trash_active.png") }}
+        onClick={delItem}>
+
+        <img src={trashSrc} />
+      </button>
     </div>
   )
 }
@@ -65,17 +85,21 @@ export default function Items() {
   const formCreateItemRef = useRef(null);
 
   const [isFormCreateItem, setIsFormCreateItem] = useState(false);
-  const [name, setName] = useState("");
 
-  useEffect(() => {
-    const setCurrentItems = (data) => {
+  const updateItems = async () => {
+    await fetchItems({setCurrentItems: data => {
       setItems(data);
       setAllItems(data);
-    }
+    }});
+  }
 
-    fetchItems(setCurrentItems);
-
+  useEffect(() => {
+    updateItems();
   }, []);
+
+  const handleUpdate = async () => {
+    await updateItems();
+  }
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -109,6 +133,10 @@ export default function Items() {
       ? [...allItems].sort((a, b) => a.price - b.price)
       : [...allItems].sort((a, b) => b.price - a.price)
     )
+  }
+
+  const createItem = async (formData) => {
+    await addItem(formData);
   }
 
   return (
@@ -173,7 +201,9 @@ export default function Items() {
                 onClick={e => {
                   e.target === e.currentTarget && setIsFormCreateItem(false);
                 }}>
-                <FormCreateItem />
+                <FormCreateItem
+                  onSubmit={createItem}
+                  onUpdate={handleUpdate} />
               </div>
             ) : (
               <button
@@ -192,12 +222,12 @@ export default function Items() {
             index={index + 1}
             title={item.title}
             description={item.description}
+            onUpdate={handleUpdate}
             price={item.price}
             type={item.type}
           />
         ))}
       </div>
-
 
       </div>
     </Container>
