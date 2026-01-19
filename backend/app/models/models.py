@@ -1,5 +1,6 @@
 from pydantic import Field, ConfigDict
 from beanie import Document, Indexed
+from pymongo import IndexModel
 from typing import Annotated, Optional
 
 from datetime import datetime, timezone
@@ -7,8 +8,9 @@ from datetime import datetime, timezone
 
 class User(Document):
     # основные данные
-    name: Annotated[str, Indexed(unique=True)]
+    name: Annotated[str, Indexed(unique=True)] = Field(min_length=1, max_length=20, description="Имя пользователя")
     hashed_password: str
+    current_avatar: str = Field(default="avatar_default_1", min_length=1, max_length=50, description="ID аватара")
     level: int = Field(default=1, gt=0)
     xp: float = Field(default=0, ge=0)
     Spoints: float = Field(default=0, ge=0)
@@ -36,6 +38,23 @@ class User(Document):
         name = "users"
 
 
+class UsersAvatars(Document):
+    user_name: str = Field(min_length=1, max_length=20, description="Имя пользователя")
+    avatar_id: str = Field(min_length=1, max_length=50, description="ID аватара")
+    created_at: datetime = datetime.now(timezone.utc)
+
+    model_config = ConfigDict(extra="forbid")
+
+    class Settings:
+        name = "users_avatars"
+        indexes = [
+            IndexModel(
+                [("user_name", 1), ("avatar_id", 1)],
+                unique=True
+            )
+        ]
+
+
 class BaseTask(Document):
     difficulty: Annotated[str, Indexed(unique=True)]
     points: int = Field(ge=0, description="Поинты за задание")
@@ -56,12 +75,11 @@ class Level(Document):
 
 
 class ShopItem(Document):
-    title: Annotated[str, Indexed(unique=True)] = Field(
-        max_length=100, description="Название товара"
-    )
+    title: str = Field(max_length=100, description="Название товара")
     description: str = Field(max_length=255, description="Описание товара")
     price: int = Field(gt=0, description="Цена товара")
-    type: str = Field(description="Тип товара")
+    creator: str = Field(min_length=1, description="Пользователь, который создал товар")
+    type: str = Field(min_length=1, max_length=20,description="Тип товара")
     min_level: int = Field(gte=0, description="Минимальный уровень для покупки")
 
     model_config = ConfigDict(extra="forbid")
@@ -85,7 +103,7 @@ class Item(Document):
 
 class Task(Document):
     # основные данные
-    title: str = Field(max_length=100, description="Название квеста")
+    title: str = Field(min_length=1, max_length=100, description="Название квеста")
     description: str = Field(max_length=255, description="Описание квеста")
     type: str = Field(description="Тип квеста")
     user: str = Field(description="Пользователь, который зарегистрировал квест")

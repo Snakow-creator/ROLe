@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from contextlib import asynccontextmanager
 
-from models.models import User, Level, ShopItem, BaseTask, Task, Item
+from models.models import User, Level, ShopItem, BaseTask, Task, Item, UsersAvatars
 from models.settings import settings, baseSettings
 from base.utils import drop_tests_collection
 from tasks.utils import update_tasks
@@ -26,7 +26,7 @@ async def main(app: FastAPI):
     # initialize db
     await beanie.init_beanie(
         database=client[collection],
-        document_models=[User, Level, ShopItem, BaseTask, Task, Item],
+        document_models=[User, Level, ShopItem, BaseTask, Task, Item, UsersAvatars],
     )
     # expire tasks and users data
     await update_tasks()

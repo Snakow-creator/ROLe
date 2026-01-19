@@ -4,7 +4,7 @@ from repositories import user_repo, shop_items_repo, items_repo
 async def get_items(level, name):
     # get objects
     user = await user_repo.get_by_name(name)
-    items_list = await shop_items_repo.get_by_min_level(level)
+    items_list = await shop_items_repo.get_by_min_level(level, name)
 
     for id in range(len(items_list)):
         stock_price = items_list[id].price

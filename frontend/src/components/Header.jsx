@@ -2,16 +2,15 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
 import { logout, getAuth } from '../services/apiService/auth';
+import { getAvatar } from '../services/apiService/users';
+import { AVATAR_ASSETS } from '../data/data';
+import LinkHeader from './LinkHeader';
 
 export default function Header() {
   const [bar, setBar] = useState(<></>);
   const [navigation, setNavigation] = useState(<></>);
   const [auth, setAuth] = useState(null);
-
-  const checkAuth = async () => {
-    const res = await getAuth();
-    setAuth(res.auth);
-  }
+  const [avatar, setAvatar] = useState(null);
 
   const logoutUser = async () => {
     const setAuthFalse = () => {
@@ -26,9 +25,8 @@ export default function Header() {
     setNavigation(auth &&
       // navigation, near right with logo
       <nav className="flex items-center space-x-8">
-        <h3><Link to="/add/task" className="font-bold text-lg">добавить задачу</Link></h3>
-        <h3><Link to="/tasks" className='font-bold text-lg'>мои задачи</Link></h3>
-        <h3><Link to="/items" className='font-bold text-lg'>магазин</Link></h3>
+        <LinkHeader to="/quests">мои квесты</LinkHeader>
+        <LinkHeader to="/items">магазин</LinkHeader>
       </nav>
     )
   }
@@ -39,24 +37,38 @@ export default function Header() {
     if (auth) {
       setBar(
         <>
-          <h3 className="bg-gray-400 border w-10 h-10 rounded-full">
-            <Link to="/profile" className='absolute w-10 h-10 rounded-full'></Link>
-          </h3>
+          <Link to="/profile" className='w-10 h-10 inline-block border overflow-hidden rounded-full'>
+            <img src={avatar} className="w-full h-full object-cover"/>
+          </Link>
           <button className='cursor-pointer w-[30px] h-[30px]' onClick={logoutUser}>
-          <img src="/header/logout.svg"/>
+            <img src="/header/logout.svg"/>
           </button>
         </>
       )
     } else {
       setBar(
         <>
-          <h3><Link to="/login" className='font-bold text-lg'>войти</Link></h3>
-          <h3><Link to="/register" className='font-bold text-lg'>регистрация</Link></h3>
+          <LinkHeader to="/register">регистрация</LinkHeader>
+          <LinkHeader to="/login">войти</LinkHeader>
         </>
       )
     }
   }
   useEffect(() => {
+    const checkAuth = async () => {
+      const res = await getAuth();
+      setAuth(res.auth);
+    }
+
+    const checkAvatar = async () => {
+      const onUpdateAvatar = avatarId => {
+        setAvatar(AVATAR_ASSETS[avatarId]);
+      }
+
+      await getAvatar(onUpdateAvatar);
+    }
+
+    checkAvatar();
     checkAuth();
   }, []);
 

@@ -8,7 +8,7 @@ export const getTasks = async (creds) => {
 
     return res
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 
@@ -16,7 +16,6 @@ export const getTasks = async (creds) => {
 export async function addTask(formData) {
   try {
     const res = await api.post("/add/task", formData);
-    console.log(res)
     return res
 
   } catch (error) {
@@ -33,6 +32,7 @@ export async function completeTask(creds) {
 
     return res
   } catch (error) {
+    console.error(error);
     // creds.onError(error) уведомления
   }
 }
@@ -45,6 +45,7 @@ export async function unCompleteTask(creds) {
 
     return res
   } catch (error) {
+    console.error(error);
     // creds.onError(error) уведомления
   }
 }
@@ -53,10 +54,11 @@ export async function unCompleteTask(creds) {
 export async function deleteTask(creds) {
   try {
     const res = await api.delete(`/delete/task/${creds.id}`);
-    creds.onDeleteTask(res.data.title);
+    // creds.onDeleteTask(res.data.title); уведомления
 
     return res
   } catch (error) {
-    creds.onError(error)
+    console.error(error);
+    // creds.onError(error) уведомления
   }
 }
