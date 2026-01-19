@@ -93,6 +93,7 @@ async def profile(
             "name": user["name"],
             "level": user["level"],
             "role": which_my_role.get(user["level"], "Бог"),
+            "avatar": user["current_avatar"],
             "xp": user["xp"],
             "Spoints": user["Spoints"],
             "days_streak": user["days_streak"],
@@ -107,5 +108,5 @@ async def profile(
             "complete_hardcore_tasks": user["complete_hardcore_tasks"],
         }
         return data
-    except Exception as ex:
+    except Exception:
         raise HTTPException(status_code=404, detail="Not authorized")

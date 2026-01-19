@@ -12,6 +12,3 @@ async def load_data():
 
     await load_levels()
     logging.info("load Levels")
-    
-    await load_items()
-    logging.info("load Items")

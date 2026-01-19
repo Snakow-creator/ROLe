@@ -13,3 +13,7 @@ export const filter_types_items = {
   "Еда": "food",
 
 }
+
+export const AVATAR_ASSETS = {
+  "avatar_default_1": "/avatars/default_1.webp"
+}

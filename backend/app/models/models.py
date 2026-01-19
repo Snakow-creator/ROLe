@@ -1,5 +1,6 @@
 from pydantic import Field, ConfigDict
 from beanie import Document, Indexed
+from pymongo import IndexModel
 from typing import Annotated, Optional
 
 from datetime import datetime, timezone
@@ -9,6 +10,7 @@ class User(Document):
     # основные данные
     name: Annotated[str, Indexed(unique=True)] = Field(min_length=1, max_length=20, description="Имя пользователя")
     hashed_password: str
+    current_avatar: str = Field(default="avatar_default_1", min_length=1, max_length=50, description="ID аватара")
     level: int = Field(default=1, gt=0)
     xp: float = Field(default=0, ge=0)
     Spoints: float = Field(default=0, ge=0)
@@ -34,6 +36,23 @@ class User(Document):
 
     class Settings:
         name = "users"
+
+
+class UsersAvatars(Document):
+    user_name: str = Field(min_length=1, max_length=20, description="Имя пользователя")
+    avatar_id: str = Field(min_length=1, max_length=50, description="ID аватара")
+    created_at: datetime = datetime.now(timezone.utc)
+
+    model_config = ConfigDict(extra="forbid")
+
+    class Settings:
+        name = "users_avatars"
+        indexes = [
+            IndexModel(
+                [("user_name", 1), ("avatar_id", 1)],
+                unique=True
+            )
+        ]
 
 
 class BaseTask(Document):
