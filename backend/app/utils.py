@@ -1,6 +1,5 @@
 from levels.load import load_levels
 from baseTasks.load import load_baseTasks
-from items.load import load_items
 
 import logging
 
