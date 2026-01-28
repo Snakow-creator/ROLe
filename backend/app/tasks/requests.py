@@ -53,7 +53,6 @@ async def complete_task(id, name):
     level = current_level(user.xp)
     if level > user.level:
         res = await edit_level(name, level)
-        print(res)
         return {
             "message": "Task completed",
             "isWeekly": True,

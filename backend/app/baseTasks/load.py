@@ -7,7 +7,8 @@ async def load_baseTasks():
             continue
         task_obj = BaseTask(
             difficulty=task["difficulty"],
-            points=task["points"]
+            points=task["points"],
+            creator="all",
         )
         await BaseTask.insert_one(task_obj)
 

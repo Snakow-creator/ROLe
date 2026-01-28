@@ -1,8 +1,6 @@
 from base.config import BaseRepository
 from models.models import Task
 
-from tasks.data import tasks_sort
-
 from datetime import datetime, timezone
 
 
@@ -22,19 +20,6 @@ class TaskRepository(BaseRepository):
         ).to_list()
 
         return tasks
-
-
-    async def get_type_tasks(self, name):
-        tasks = await self.model.find(Task.user == name).to_list()
-        type_tasks = set()
-
-        for task in tasks:
-            type_tasks.add(task.type)
-
-        type_tasks = list(type_tasks)
-        type_tasks.sort(key=lambda x: tasks_sort[x])
-        
-        return type_tasks
 
 
     async def get_user_tasks_by_type(self, name, type):

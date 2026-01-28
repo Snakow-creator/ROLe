@@ -1,8 +1,6 @@
 from pymongo import MongoClient
 from models.settings import settings
 
-import logging
-
 # init database
 client = MongoClient(settings.mongo_address, port=27017)
 role_db = client["role_db"]
