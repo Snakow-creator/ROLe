@@ -71,7 +71,7 @@ ___
 ![Профиль](assets/images/preview_profile.png)
 ___
 
-<!-- ### Установка ROLe в Docker-контейнер
+### Установка ROLe в Docker-контейнер
 
 > **ROLe** - это не какой либо сайт, который хранит твои данные, это твое **собственное локальное приложение**
 
@@ -144,12 +144,12 @@ cd 'папка с ROLe' # изменить
 /usr/local/bin/docker compose up -d
 
 # 5. Ждём, пока веб-сервер поднимется
-until curl -s http://127.0.0.1:5173 >/dev/null; do
+until curl -s http://127.0.0.1:4173 >/dev/null; do
     sleep 2
 done
 
 # 6. Открытие сайта
-open "http://127.0.0.1:5173"
+open "http://127.0.0.1:4173"
 
 exit 0
-``` -->
+```
