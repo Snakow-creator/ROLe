@@ -27,7 +27,6 @@ async def edit_level(name, level):
     # if level - user.level < 0 -> deprive
     points = (level - user.level) * 200
 
-    print(points)
     await user.update(
         {
             "$inc": {"Spoints": points},

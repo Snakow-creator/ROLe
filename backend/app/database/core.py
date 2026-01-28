@@ -3,7 +3,7 @@ from models.settings import settings
 
 # init database
 client = MongoClient(settings.mongo_address, port=27017)
-role_db = client[settings.collection_name]
+role_db = client["role_db"]
 
 # init collections
 users = role_db["users"]

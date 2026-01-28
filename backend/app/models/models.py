@@ -58,6 +58,7 @@ class UsersAvatars(Document):
 class BaseTask(Document):
     difficulty: Annotated[str, Indexed(unique=True)]
     points: int = Field(ge=0, description="Поинты за задание")
+    creator: str = Field(min_length=1, description="Пользователь, который создал задание")
 
     model_config = ConfigDict(extra="forbid")
 

@@ -40,7 +40,6 @@ async def main(app: FastAPI):
 
     if collection == baseSettings.test_collection_name:
         await load_data()
-        logging.error("load data")
 
     yield
     # end

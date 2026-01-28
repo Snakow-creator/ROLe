@@ -6,7 +6,7 @@ from models.models import Task, User
 
 from tasks.requests import complete_task, uncomplete_task
 
-from repositories import task_repo
+from repositories import task_repo, base_tasks_repo
 from baseTasks.data import list_baseTasks
 from api.core.security import security
 
@@ -21,7 +21,7 @@ async def tasks(
     user: User = Depends(security.get_current_subject),
 ):
     tasks = await task_repo.get_user_tasks(user["name"])
-    type_tasks = await task_repo.get_type_tasks(user['name'])
+    type_tasks = await base_tasks_repo.get_base_tasks(user['name'])
 
     return {"message": "Success", "tasks": tasks, "type_tasks": type_tasks}
 
