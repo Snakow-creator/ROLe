@@ -117,14 +117,14 @@ function CanbanDesk(creds) {
   return (
     <div
       className={cn(
-        "container bg-[#F9FAFE] rounded-2xl py-3 px-2 w-[275px] shadow border border-[#E5E9F0]",
+        "container bg-[#F9FAFE] flex-shrink-0 rounded-2xl py-3 px-2 w-[275px] 2xl:w-[320px] shadow border border-[#E5E9F0]",
         creds.className,
       )}
     >
       <div className="font-extrabold">
         <h2 className="ml-4">{creds.title}</h2>
 
-        <div className="mt-2 space-y-2">
+        <div className="mt-2 space-y-2 w-full">
           {creds.tasks
             .filter(task => task.type === creds.type)
             .map(({ _id, title, description }) => (

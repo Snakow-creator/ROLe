@@ -43,11 +43,11 @@ export default function Login() {
 
   return (
     <Container>
-      <div className="container md:w-[50%] mx-auto rounded-2xl md:mt-16 mt-4 py-4 bg-white shadow-sm">
+      <div className="container sm:w-[50%] sm:min-w-[324px] sm:max-w-[400px] 2xl:max-w-[500px] mx-auto 2xl:text-lg rounded-2xl md:mt-16 mt-4 pt-4 pb-6 2xl:pt-6 2xl:pb-8 bg-white shadow-sm">
 
         <h1 className="text-3xl font-bold">Войти в аккаунт</h1>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-2 w-full">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-2">
           <input
             type="text"
             id="name"
@@ -55,10 +55,10 @@ export default function Login() {
             placeholder="Ник"
             value={formData.name}
             onChange={handleChange}
-            className="block mx-auto border rounded px-1 py-0.5"
+            className="block mx-auto border rounded px-1 py-0.5 w-[226px] 2xl:w-[244px]"
           />
 
-          <span className="w-full relative">
+          <span className="relative">
             <input
               type={showPassword ? "text" : "password"}
               id="password"
@@ -69,7 +69,7 @@ export default function Login() {
               minLength="8"
               maxLength="20"
               onChange={handleChange}
-              className="border rounded px-1 py-0.5"
+              className="border rounded px-1 py-0.5 w-[226px] 2xl:w-[244px]"
             />
             <button
               type="button"

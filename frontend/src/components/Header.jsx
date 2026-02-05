@@ -78,7 +78,7 @@ export default function Header() {
   }, [auth]);
 
   return (
-    <header className="bg-[#FAFBFF] z-50">
+    <header className="fixed top-0 left-0 w-full bg-[#FAFBFF] z-50">
       <div className="flex items-center justify-between py-2 ml-4">
         {/* logo */}
         <div className="flex items-center space-x-8">
