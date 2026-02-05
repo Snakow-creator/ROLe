@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
 import FormCreateTask from "../components/forms/FormCreateTask";
+import Spinner from "../components/Spinner";
 import { getTasks, completeTask, unCompleteTask, deleteTask } from "../services/apiService/tasks";
 
 import { cn } from "../hooks/utils";
@@ -168,14 +169,18 @@ function CanbanDesk(creds) {
 
 
 export default function Tasks() {
+  const [isLoading, setIsLoading] = useState(true);
+
   const [tasks, setTasks] = useState([]);
   const [typeTasks, setTypeTasks] = useState([]);
+
 
   const fetchTasks = async () => {
     await getTasks({
       onFinish: data => {
         setTasks(data.tasks);
         setTypeTasks(data.type_tasks);
+        setIsLoading(false);
       }
     });
   }
@@ -189,15 +194,17 @@ export default function Tasks() {
   }
 
   return (
-    <div className="flex items-start ml-2 mt-4 space-x-3">
-      {typeTasks.map(type => (
-        <CanbanDesk
-          key={type}
-          title={quests_types[type]}
-          type={type}
-          tasks={tasks}
-          onUpdate={handleUpdate} />
-      ))}
-    </div>
+      isLoading
+      ? <Spinner />
+      : <div className="flex items-start ml-2 mt-4 space-x-3">
+        {typeTasks.map(type => (
+          <CanbanDesk
+            key={type}
+            title={quests_types[type]}
+            type={type}
+            tasks={tasks}
+            onUpdate={handleUpdate} />
+        ))}
+      </div>
   );
 };
