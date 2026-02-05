@@ -1,5 +1,6 @@
 import Button from "../components/Button";
 import Container from "../components/Container";
+import Spinner from "../components/Spinner";
 
 import { useState, useEffect, useRef } from "react";
 
@@ -84,12 +85,14 @@ export default function Items() {
   const [items, setItems] = useState([]);
   const formCreateItemRef = useRef(null);
 
+  const [isLoading, setIsLoading] = useState(true);
   const [isFormCreateItem, setIsFormCreateItem] = useState(false);
 
   const updateItems = async () => {
     await fetchItems({setCurrentItems: data => {
       setItems(data);
       setAllItems(data);
+      setIsLoading(false);
     }});
   }
 
@@ -140,7 +143,9 @@ export default function Items() {
   }
 
   return (
-    <Container>
+    isLoading
+      ? <Spinner />
+      : <Container>
       <div className="container bg-[#F9FAFE] mt-16 mx-auto w-[800px] rounded-2xl py-8 px-8 shadow border border-[#E5E9F0]">
         <h1 className="text-2xl font-bold">
           Магазин услуг

@@ -20,5 +20,16 @@
   hr {
     border: 1px solid var(--color-border);
   }
+
+  .loader {
+    width: 50px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 8px solid;
+    border-color: #3A3A3A #2B2B2B10;
+    animation: l1 1s infinite;
+  }
+  
+  @keyframes l1 {to{transform: rotate(.5turn)}}
 }
 

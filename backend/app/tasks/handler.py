@@ -20,6 +20,7 @@ router = APIRouter(tags=["tasks"])
 async def tasks(
     user: User = Depends(security.get_current_subject),
 ):
+
     tasks = await task_repo.get_user_tasks(user["name"])
     type_tasks = await base_tasks_repo.get_base_tasks(user['name'])
 
