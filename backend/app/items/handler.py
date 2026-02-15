@@ -33,8 +33,6 @@ async def handler_add_item(
     creds: ItemSchema,
     user: User = Depends(security.get_current_subject),
 ):
-    print(creds)
-
     if creds.title == "":
         raise HTTPException(
             status_code=401,

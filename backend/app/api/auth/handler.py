@@ -4,7 +4,7 @@ from authx import AuthXDependency
 
 from models.models import User
 from models.schemas import UserSchema, RegisterUserSchema
-from users.object import UserObj
+from users import user_service
 from repositories import user_repo
 
 from api.core.crypt import hash_password, verify_password
@@ -27,13 +27,15 @@ async def login(creds: UserSchema):
         user = await user_repo.get_by_name(creds.name)
         if await verify_password(creds.password, user.hashed_password):
             user_id = user.name
-            user_obj = await UserObj.init_object(user_id)
-            data = user_obj.data
+            data = await user_service.load_data(user_id)
 
         else:
             return JSONResponse(
                 status_code=400,
-                content={"message": "Invalid credentials", "error": "Invalid credentials"},
+                content={
+                    "message": "Invalid credentials",
+                    "error": "Invalid credentials",
+                },
             )
 
     tokens = await auth.authenticate_user(user_id, data)
@@ -51,18 +53,22 @@ async def register(creds: RegisterUserSchema):
 
     user_names = await user_repo.get_all_names()
     if creds.name in user_names:
-        errors.append({
-            "message": "User name already exists",
-            "field": "name",
-            "code": "user_exists",
-        })
+        errors.append(
+            {
+                "message": "User name already exists",
+                "field": "name",
+                "code": "user_exists",
+            }
+        )
 
     if creds.password1 != creds.password2:
-        errors.append({
-            "message": "Passwords do not match",
-            "field": "password",
-            "code": "passwords_mismatch",
-        })
+        errors.append(
+            {
+                "message": "Passwords do not match",
+                "field": "password",
+                "code": "passwords_mismatch",
+            }
+        )
     print(errors)
     if errors:
         raise HTTPException(status_code=400, detail=errors)
@@ -76,7 +82,7 @@ async def register(creds: RegisterUserSchema):
 @router.get("/protected")
 async def protected(
     request: Request,
-    res = Depends(auth.safe_access_token_getter),
+    res=Depends(auth.safe_access_token_getter),
 ):
     if isinstance(res, JSONResponse):
         return res

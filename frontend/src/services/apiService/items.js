@@ -23,7 +23,6 @@ export const fetchItems = async (creds) => {
 export const addItem = async (formData) => {
   try {
     const res = await api.post("/add/item", formData);
-    console.log(res);
     return res
 
   } catch (error) {

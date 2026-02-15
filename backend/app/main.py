@@ -5,8 +5,8 @@ from contextlib import asynccontextmanager
 
 from models.models import User, Level, ShopItem, BaseTask, Task, Item, UsersAvatars
 from models.settings import settings, baseSettings
-from base.utils import drop_tests_collection
-from tasks.utils import update_tasks
+from tasks import task_service
+from base.database import drop_tests_collection
 from users.requests import users_days_and_last_mul_expired
 from api.core.security import load_security_handle_errors
 from routers import init_router
@@ -29,7 +29,7 @@ async def main(app: FastAPI):
         document_models=[User, Level, ShopItem, BaseTask, Task, Item, UsersAvatars],
     )
     # expire tasks and users data
-    await update_tasks()
+    await task_service.update()
     await users_days_and_last_mul_expired()
 
     # init handle errors
