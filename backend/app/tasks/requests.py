@@ -1,8 +1,9 @@
 from users.requests import edit_points, up_streak, edit_level
-from levels.hooks import current_level
+from levels import level_service
 from repositories import task_repo, user_repo
 
-from tasks.utils import weekly_bonus, unset_weekly_bonus
+
+from users import weekly_bonus
 from baseTasks.data import baseTasks_points, task_bonus
 
 from datetime import datetime, timezone
@@ -27,7 +28,7 @@ async def complete_task(id, name):
 
     # check completed hard tasks and add weekly bonus
     if len(tasks) == 1 and task.type == "hard":
-        await weekly_bonus(user)
+        await weekly_bonus.claim(user)
         complete_week = True
 
 
@@ -50,9 +51,9 @@ async def complete_task(id, name):
     )
 
     # update level if current level higher than task level
-    level = current_level(user.xp)
-    if level > user.level:
-        res = await edit_level(name, level)
+    current_level = level_service.current(user.xp)
+    if current_level > user.level:
+        res = await edit_level(name, current_level)
         return {
             "message": "Task completed",
             "isWeekly": True,
@@ -80,7 +81,7 @@ async def uncomplete_task(id, name):
 
     # if task is weekly bonus unset bonus
     if task.is_weekly_bonus:
-        await unset_weekly_bonus(user)
+        await weekly_bonus.revoke(user)
         complete_week = False
 
     # task update, do task is active
@@ -98,8 +99,8 @@ async def uncomplete_task(id, name):
 
 
     # update level if current level less than user level
-    level = current_level(user.xp)
-    if user.level > level:
-        await edit_level(name, level)
+    current_level = level_service.current(user.xp)
+    if user.level > current_level:
+        await edit_level(name, current_level)
 
     return {"message": "Task uncompleted", "points": points, "xp": points}

@@ -1,5 +1,5 @@
 from models.settings import baseSettings, settings
-from base.utils import init_db
+from backend.app.base.database import init_db
 
 from levels.load import load_levels
 from baseTasks.load import load_baseTasks
