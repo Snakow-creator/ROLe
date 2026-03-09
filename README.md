@@ -130,7 +130,9 @@ docker compose up
 
 ```shell
 # 1. Запуск Docker Desktop, если не запущен (без показа окна)
-open --hide --background -a Docker
+if ! /usr/local/bin/docker info >/dev/null 2>&1; then
+	open --hide --background -a Docker
+fi
 
 # 2. Ждём, пока Docker запустится (проверяем сокет)
 until /usr/local/bin/docker info >/dev/null 2>&1; do
@@ -138,18 +140,35 @@ until /usr/local/bin/docker info >/dev/null 2>&1; do
 done
 
 # 3. Переход в проект
-cd 'папка с ROLe' # изменить
+cd 'путь к проекту'
 
-# 4. Запуск контейнеров
+# 4. Остановка старых контейнеров
+/usr/local/bin/docker compose down
+
+# 5. Запуск контейнеров
 /usr/local/bin/docker compose up -d
 
-# 5. Ждём, пока веб-сервер поднимется
-until curl -s http://127.0.0.1:4173 >/dev/null; do
+# 6. Ждём, пока веб-сервер поднимется
+until curl -sf http://127.0.0.1:4173 >/dev/null; do
     sleep 2
 done
 
-# 6. Открытие сайта
+# 7. Открытие сайта
 open "http://127.0.0.1:4173"
 
 exit 0
 ```
+
+**Важно!**
+
+Если твой проект находится в **защищенных папках MacOS**:
+
+- Documents
+- Desktop
+- Downloads
+- iCloud Drive
+- External drives
+- Network volumes
+
+MacOS после перезагрузки один раз будет запрашивать разрешение на чтение файлов.
+Чтобы не MacOS не запрашивал разрешение, проект можно не сохранять в данных папках.
