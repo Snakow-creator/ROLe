@@ -127,3 +127,32 @@ class Task(Document):
 
     class Settings:
         name = "tasks"
+
+
+class Notice(Document):
+    id_name: str = Field(min_length=1, max_length=50, description="ID пользователя")
+    id: int = Field(gt=0, description="ID уведомления", unique=True)
+    message: str = Field(min_length=1, max_length=255, description="Текст уведомления")
+    hidden: bool = Field(default=False, description="Скрыть уведомление")
+    if_bonus: bool = Field(default=False, description="Бонус")
+    id_bonus: str = Field(default=None, description="ID бонуса")
+    
+    date: Optional[datetime] = datetime.now(timezone.utc)
+
+
+    model_config = ConfigDict(extra="forbid")
+
+    class Settings:
+        name = "notices"
+
+
+
+class Avatar_Item(Document):
+    id_avatar: str = Field(min_length=1, max_length=50, description="ID аватара")
+    name_user: str = Field(min_length=1, description="Пользователь, который купил аватар")
+    date: Optional[datetime] = datetime.now(timezone.utc) # дата приобретения
+
+    model_config = ConfigDict(extra="forbid")
+
+    class Settings:
+        name = "avatar_items"

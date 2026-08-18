@@ -1,6 +1,7 @@
 from users.requests import edit_points, up_streak, edit_level
 from levels import level_service
 from repositories import task_repo, user_repo
+from notices import web_notice
 
 
 from users import weekly_bonus
@@ -49,6 +50,7 @@ async def complete_task(id, name):
             "is_weekly_bonus": complete_week
         }}
     )
+    notice = web_notice("")  # create notice
 
     # update level if current level higher than task level
     current_level = level_service.current(user.xp)
