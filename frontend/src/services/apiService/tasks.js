@@ -31,7 +31,7 @@ export async function completeTask(creds) {
     const res = await api.put(`/complete/task/${creds.id}`, {});
     // creds.onCompleteTask(res) уведомления
 
-    return res
+    return res.data
   } catch (error) {
     console.error(error);
     // creds.onError(error) уведомления

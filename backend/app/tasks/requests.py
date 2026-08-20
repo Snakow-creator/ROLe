@@ -50,25 +50,44 @@ async def complete_task(id, name):
             "is_weekly_bonus": complete_week
         }}
     )
-    notice = web_notice("")  # create notice
+
+    notice = web_notice(
+        title=f"Квест \"{task.title}\" выполнен!",
+        message=f"Вы получили {points} Spoints\n + {points}",
+        type="task_completed",
+    ) # create notice
 
     # update level if current level higher than task level
     current_level = level_service.current(user.xp)
     if current_level > user.level:
         res = await edit_level(name, current_level)
+
+        notice_lvl = web_notice(
+            title=f"Вы повысили уровень с {user.level} до {current_level}",
+            message="Вы получили бонус уровня +200 Spoints",
+            type="up_level",
+        )
         return {
             "message": "Task completed",
             "isWeekly": True,
             "points": points,
+            "notice": notice.model_dump(),
+            "notice_up_level": notice_lvl.model_dump(),
             "xp": points,
             "spointsLevel": res["points"],
         }
+
+    notice = web_notice(
+            title=f"Квест \"{task.title}\" выполнен!",
+            message=f"Вы получили {points} Spoints\n + {points} Xp",
+        )  # create notice
 
     return {
         "message": "Task completed",
         "isUpLevel": False,
         "points": points,
         "xp": points,
+        "notice": notice.model_dump(),
         "isWeekly": complete_week
     }
 

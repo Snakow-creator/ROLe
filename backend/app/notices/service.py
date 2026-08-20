@@ -3,6 +3,7 @@ from pydantic import BaseModel, field_validator, Field
 class WebNotice(BaseModel):
     title: str
     message: str
+    type: str
     seconds: int = Field(default=10, gt=0)
 
     @field_validator("seconds")

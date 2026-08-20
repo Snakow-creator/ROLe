@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 
 import FormCreateTask from "../components/forms/FormCreateTask";
 import Spinner from "../components/Spinner";
+import { NoticeContainer }  from "../components/NoticeContainer";
 import { getTasks, completeTask, unCompleteTask, deleteTask } from "../services/apiService/tasks";
 
 import { cn } from "../hooks/utils";
@@ -11,7 +12,6 @@ import { quests_types } from "../data/data";
 function Task(creds) {
   // className objects
   const [classTitle, setClassTitle] = useState("");
-
   const [showSubmit, setShowSubmit] = useState(false);
   const [isSubmit, setIsSubmit] = useState(false);
   const [trashSrc, setTrashSrc] = useState("/task/trash.png");
@@ -34,9 +34,15 @@ function Task(creds) {
       })
     } else {
       setIsSubmit(true);
-      await completeTask({
+      const data = await completeTask({
         id: creds.id
       })
+      creds.onNotice(data.notice)
+
+      if (data.notice_up_level) {
+        creds.onNoticeUpLevel(data.notice_up_level)
+      }
+
     }
   }
 
@@ -92,6 +98,7 @@ function Task(creds) {
 function CanbanDesk(creds) {
   const [isFormCreateTask, setIsFormCreateTask] = useState(false);
 
+
   const formCreateTaskRef = useRef(null);
 
   useEffect(() => {
@@ -132,7 +139,9 @@ function CanbanDesk(creds) {
                 id={_id}
                 title={title}
                 description={description}
-                onUpdate={creds.onUpdate} />
+                onUpdate={creds.onUpdate}
+                onNotice={creds.onNotice}
+                onNoticeUpLevel={creds.onNoticeUpLevel} />
             ))
           }
         </div>
@@ -171,6 +180,9 @@ function CanbanDesk(creds) {
 export default function Tasks() {
   const [isLoading, setIsLoading] = useState(true);
 
+  const [notice, setNotice] = useState(<></>);
+  const [noticeUpLevel, setNoticeUpLevel] = useState(<></>);
+
   const [tasks, setTasks] = useState([]);
   const [typeTasks, setTypeTasks] = useState([]);
 
@@ -189,12 +201,24 @@ export default function Tasks() {
     fetchTasks();
   }, []);
 
+  const handleNotice = async (notice) => {
+    const seconds = notice.seconds ?? 10
+
+    console.log(notice.title)
+    setNotice(notice);
+  }
+
+  const handleNoticeUpLevel = async (notice) => {
+    const seconds = notice.seconds ?? 10
+    setNoticeUpLevel(notice);
+  }
+
   const handleUpdate = async () => {
     fetchTasks();
   }
 
   return (
-      isLoading
+    isLoading
       ? <Spinner />
       : <div className="flex items-start ml-2 mt-4 space-x-3">
         {typeTasks.map(type => (
@@ -203,8 +227,13 @@ export default function Tasks() {
             title={quests_types[type]}
             type={type}
             tasks={tasks}
-            onUpdate={handleUpdate} />
+            onUpdate={handleUpdate}
+            onNotice={handleNotice}
+            onNoticeUpLevel={handleNoticeUpLevel} />
         ))}
+
+        {NoticeContainer(notice)}
+        {NoticeContainer(noticeUpLevel)}
       </div>
   );
 };
