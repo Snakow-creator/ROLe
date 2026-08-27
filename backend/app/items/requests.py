@@ -14,14 +14,14 @@ async def get_items(level, name):
 
 
 async def buy_item(id, name):
-    item = await shop_items_repo.get(id)
-    user = await user_repo.get_by_name(name)
+    item = await shop_items_repo.get(id) # get item
+    user = await user_repo.get_by_name(name) # get user
 
-    price = -item.price * user.sale_shop
+    price = item.price * user.sale_shop # calculate price
 
     await user.update({
         "$inc": {
-            "Spoints": price
+            "Spoints": price * -1 # deprive points
         }
     })
 

@@ -257,7 +257,7 @@ levels_data = [
 ]
 
 
-xp_list = [(lvl['xp'], lvl['level']) for lvl in levels_data]
+xp_list = [(lvl['xp'], lvl['level']) for lvl in levels_data] # example [(0, 1), (300, 2)]
 
 
 which_my_role = {

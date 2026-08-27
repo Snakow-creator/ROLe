@@ -64,7 +64,6 @@ export default function Header() {
       const onUpdateAvatar = avatarId => {
         setAvatar(AVATAR_ASSETS[avatarId]);
       }
-
       await getAvatar(onUpdateAvatar);
     }
 

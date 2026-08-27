@@ -12,11 +12,4 @@ router = APIRouter(tags=["users"], prefix="/users")
 async def get_users(
     user: User = Depends(security.get_current_subject),
 ):
-    try:
-      return user["current_avatar"]
-
-    except:
-       raise HTTPException(
-          status_code=404,
-          detail={"error": "Not authorized"}
-       )
+    return {"avatar": user["current_avatar"]}

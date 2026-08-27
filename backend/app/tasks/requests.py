@@ -77,11 +77,6 @@ async def complete_task(id, name):
             "spointsLevel": res["points"],
         }
 
-    notice = web_notice(
-            title=f"Квест \"{task.title}\" выполнен!",
-            message=f"Вы получили {points} Spoints\n + {points} Xp",
-        )  # create notice
-
     return {
         "message": "Task completed",
         "isUpLevel": False,

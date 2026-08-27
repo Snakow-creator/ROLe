@@ -232,8 +232,8 @@ export default function Tasks() {
             onNoticeUpLevel={handleNoticeUpLevel} />
         ))}
 
-        {NoticeContainer(notice)}
-        {NoticeContainer(noticeUpLevel)}
+        <NoticeContainer title={notice.title} />
+        <NoticeContainer title={noticeUpLevel.title} />
       </div>
   );
 };
