@@ -51,9 +51,11 @@ async def complete_task(id, name):
         }}
     )
 
+    fpoints = round(points, 2) # formatted points
+
     notice = web_notice(
         title=f"Квест \"{task.title}\" выполнен!",
-        message=f"Вы получили {points} Spoints\n + {points}",
+        message=f"Вы получили {fpoints} Spoints\n + {fpoints} опыта",
         type="task_completed",
     ) # create notice
 

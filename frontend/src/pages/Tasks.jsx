@@ -2,11 +2,12 @@ import { useState, useEffect, useRef } from "react";
 
 import FormCreateTask from "../components/forms/FormCreateTask";
 import Spinner from "../components/Spinner";
-import { NoticeContainer }  from "../components/NoticeContainer";
 import { getTasks, completeTask, unCompleteTask, deleteTask } from "../services/apiService/tasks";
 
 import { cn } from "../hooks/utils";
 import { quests_types } from "../data/data";
+import { useNotify } from "../context/NotificationContext";
+import { TaskNotification } from "../components/webNotifications/types/TaskNotification";
 
 
 function Task(creds) {
@@ -15,6 +16,7 @@ function Task(creds) {
   const [showSubmit, setShowSubmit] = useState(false);
   const [isSubmit, setIsSubmit] = useState(false);
   const [trashSrc, setTrashSrc] = useState("/task/trash.png");
+
 
   function visibleSubmit() {
     setShowSubmit(true);
@@ -98,7 +100,6 @@ function Task(creds) {
 function CanbanDesk(creds) {
   const [isFormCreateTask, setIsFormCreateTask] = useState(false);
 
-
   const formCreateTaskRef = useRef(null);
 
   useEffect(() => {
@@ -180,11 +181,10 @@ function CanbanDesk(creds) {
 export default function Tasks() {
   const [isLoading, setIsLoading] = useState(true);
 
-  const [notice, setNotice] = useState(<></>);
-  const [noticeUpLevel, setNoticeUpLevel] = useState(<></>);
-
   const [tasks, setTasks] = useState([]);
   const [typeTasks, setTypeTasks] = useState([]);
+
+  const { push } = useNotify();
 
 
   const fetchTasks = async () => {
@@ -202,15 +202,11 @@ export default function Tasks() {
   }, []);
 
   const handleNotice = async (notice) => {
-    const seconds = notice.seconds ?? 10
-
-    console.log(notice.title)
-    setNotice(notice);
+    push(new TaskNotification(notice));
   }
 
   const handleNoticeUpLevel = async (notice) => {
     const seconds = notice.seconds ?? 10
-    setNoticeUpLevel(notice);
   }
 
   const handleUpdate = async () => {
@@ -232,8 +228,8 @@ export default function Tasks() {
             onNoticeUpLevel={handleNoticeUpLevel} />
         ))}
 
-        <NoticeContainer title={notice.title} />
-        <NoticeContainer title={noticeUpLevel.title} />
+        {/* <NoticeContainer title={notice.title} />
+        <NoticeContainer title={noticeUpLevel.title} /> */}
       </div>
   );
 };

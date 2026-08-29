@@ -8,23 +8,27 @@ import Profile from './pages/Profile';
 import Tasks from './pages/Tasks';
 import Items from './pages/Items';
 
+import { NotificationProvider } from './context/NotificationContext';
+
 
 
 export default function App() {
   return (
-    <div>
-      <Header />
+    <NotificationProvider>
+      <div>
+        <Header />
 
-      <main className='pt-[57px]'>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/quests" element={<Tasks />} />
-          <Route path="/items" element={<Items />} />
-        </Routes>
-      </main>
-    </div>
+        <main className='pt-[57px]'>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/quests" element={<Tasks />} />
+            <Route path="/items" element={<Items />} />
+          </Routes>
+        </main>
+      </div>
+    </NotificationProvider>
   );
 }
