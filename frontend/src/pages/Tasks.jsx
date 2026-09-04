@@ -7,7 +7,10 @@ import { getTasks, completeTask, unCompleteTask, deleteTask } from "../services/
 import { cn } from "../hooks/utils";
 import { quests_types } from "../data/data";
 import { useNotify } from "../context/NotificationContext";
-import { TaskNotification } from "../components/webNotifications/types/TaskNotification";
+import { TaskSubmitNotification } from "../components/webNotifications/types/TaskNotification";
+import { UpLevelNotification } from "../components/webNotifications/types/UpLevelNotification";
+import { TaskUnSubmitNotification } from "../components/webNotifications/types/TaskUnSubmitNotification";
+import { DownLevelNotification } from "../components/webNotifications/types/DownLevelNotification";
 
 
 function Task(creds) {
@@ -31,9 +34,17 @@ function Task(creds) {
   const submitTask = async () => {
     if (isSubmit) {
       setIsSubmit(false);
-      await unCompleteTask({
+      const data = await unCompleteTask({
         id: creds.id
       })
+
+      creds.onNoticeReturnTask(data.notice)
+      console.log("unCompleteTask response:", data)
+
+      if (data.notice_down_level) {
+        creds.onNoticeDownLevel(data.notice_down_level)
+      }
+
     } else {
       setIsSubmit(true);
       const data = await completeTask({
@@ -82,7 +93,7 @@ function Task(creds) {
 
       {/* trash button */}
       <button
-        className={cn("absolute right-2 z-[10000] transition-opacity duration-300 cursor-pointer h-[25px] w-[25px]",
+        className={cn("absolute right-2 z-40 transition-opacity duration-300 cursor-pointer h-[25px] w-[25px]",
           showSubmit ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onMouseEnter={() => { setTrashSrc("/task/trash_hover.png") }}
@@ -142,7 +153,9 @@ function CanbanDesk(creds) {
                 description={description}
                 onUpdate={creds.onUpdate}
                 onNotice={creds.onNotice}
-                onNoticeUpLevel={creds.onNoticeUpLevel} />
+                onNoticeUpLevel={creds.onNoticeUpLevel}
+                onNoticeReturnTask={creds.onNoticeReturnTask}
+                onNoticeDownLevel={creds.onNoticeDownLevel} />
             ))
           }
         </div>
@@ -202,11 +215,17 @@ export default function Tasks() {
   }, []);
 
   const handleNotice = async (notice) => {
-    push(new TaskNotification(notice));
+    push(new TaskSubmitNotification(notice));
+  }
+  const handleNoticeUpLevel = async (notice) => {
+    push(new UpLevelNotification(notice));
   }
 
-  const handleNoticeUpLevel = async (notice) => {
-    const seconds = notice.seconds ?? 10
+  const handleNoticeReturnTask = async (notice) => {
+    push(new TaskUnSubmitNotification(notice));
+  }
+  const handleNoticeDownLevel = async (notice) => {
+    push(new DownLevelNotification(notice));
   }
 
   const handleUpdate = async () => {
@@ -225,11 +244,12 @@ export default function Tasks() {
             tasks={tasks}
             onUpdate={handleUpdate}
             onNotice={handleNotice}
-            onNoticeUpLevel={handleNoticeUpLevel} />
+            onNoticeUpLevel={handleNoticeUpLevel}
+            onNoticeReturnTask={handleNoticeReturnTask}
+            onNoticeDownLevel={handleNoticeDownLevel} />
+
         ))}
 
-        {/* <NoticeContainer title={notice.title} />
-        <NoticeContainer title={noticeUpLevel.title} /> */}
       </div>
   );
 };

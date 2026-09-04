@@ -44,7 +44,7 @@ export async function unCompleteTask(creds) {
     const res = await api.put(`/uncomplete/task/${creds.id}`, {});
     // creds.onUncompleteTask(res) уведомления
 
-    return res
+    return res.data
   } catch (error) {
     console.error(error);
     // creds.onError(error) уведомления

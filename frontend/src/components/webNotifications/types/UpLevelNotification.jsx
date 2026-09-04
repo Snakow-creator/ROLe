@@ -1,14 +1,13 @@
-import { Notification } from "../notifications";
-import { getMessageTask } from "../../../hooks/messages";
+import { Notification } from "../notifications"
+import { getMessageLevel } from "../../../hooks/messages"
 
 // требует только название задачи и длительность
-export class TaskSubmitNotification extends Notification {
-
+export class UpLevelNotification extends Notification {
   constructor(task, duration) {
     super(task.title, duration)
     this.task = task
     this.infoMessage = task.message
-    this.message = getMessageTask()
+    this.message = getMessageLevel() // random message level
   }
 
   renderBody() {

@@ -97,6 +97,8 @@ async def uncomplete_task(id, name):
     points = task.awarded_points
     complete_week = task.is_weekly_bonus
 
+    fpoints = round(points, 2) # formatted points
+
     # if task is weekly bonus unset bonus
     if task.is_weekly_bonus:
         await weekly_bonus.revoke(user)
@@ -113,7 +115,13 @@ async def uncomplete_task(id, name):
     )
 
     # deprive user points
-    await edit_points(user, points, task.type, -1)
+    await edit_points(user, fpoints, task.type, -1)
+
+    notice = web_notice(
+            title=f"Квест \"{task.title}\" отменен!",
+            message=f"{fpoints} Spoints и {fpoints} Xp были списаны",
+            type="task_uncompleted",
+    )
 
 
     # update level if current level less than user level
@@ -121,4 +129,22 @@ async def uncomplete_task(id, name):
     if user.level > current_level:
         await edit_level(name, current_level)
 
-    return {"message": "Task uncompleted", "points": points, "xp": points}
+        notice_lvl = web_notice(
+            title=f"Вы понизили уровень с {user.level} до {current_level}",
+            message="Бонус уровня +200 Spoints был списан",
+            type="down_level",
+        )
+        return {
+                    "message": "Task uncompleted",
+                    "points": fpoints,
+                    "xp": fpoints,
+                    "notice": notice.model_dump(),
+                    "notice_down_level": notice_lvl.model_dump(),
+                }
+
+    return {
+            "message": "Task uncompleted",
+            "points": fpoints,
+            "xp": fpoints,
+            "notice": notice.model_dump(),
+            }
