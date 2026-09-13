@@ -8,6 +8,9 @@
   --color-text: #1E293B;
   --color-background: #F2F4F7;
   --color-border: #E5E9F0;
+  
+  --animate-notification-enter: notification-enter 0.35s ease-out forwards;
+  --animate-notification-exit: notification-exit 0.35s ease-in forwards;
 }
 
 @layer base {
@@ -39,6 +42,30 @@
 
   .animate-shrink {
     animation: shrink linear forwards;
+  }
+
+  @keyframes notification-enter {
+    from {
+      opacity: 0;
+      transform: translateX(120%);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes notification-exit {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    to {
+      opacity: 0;
+      transform: translateX(120%);
+    }
   }
 }
 

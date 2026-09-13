@@ -57,7 +57,7 @@ export async function deleteTask(creds) {
     const res = await api.delete(`/delete/task/${creds.id}`);
     // creds.onDeleteTask(res.data.title); уведомления
 
-    return res
+    return res.data
   } catch (error) {
     console.error(error);
     // creds.onError(error) уведомления

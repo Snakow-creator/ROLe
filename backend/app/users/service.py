@@ -3,6 +3,8 @@ from models.models import User
 from users.requests import user_repo
 
 from datetime import datetime, timezone
+from notices import web_notice
+
 
 
 class UserService:
@@ -49,6 +51,16 @@ class WeeklyBonusService:
             }
         })
 
+        mul = round(user.mul, 2)
+        sale_shop = round(user.sale_shop, 2)
+
+        return web_notice(
+            title="Вы получили недельный бонус! 🎉",
+            message=f"Ваш множитель опыта теперь снова {mul}%, а скидка магазина {sale_shop}%, а Xp и Spoints увеличены на 150",
+            type="claim_weekly_bonus",
+        )
+
+    # return bonus to previus state
     @staticmethod
     async def revoke(user: User):
         await user.update({
@@ -56,6 +68,27 @@ class WeeklyBonusService:
             "$set": {
                 "last_mul": user.penult_last_mul,
                 "mul": user.penult_mul,
-                "sale_shop": user.penult_sale_shop, # * 1 % sale bonus
+                "sale_shop": user.penult_sale_shop,
             }
         })
+
+        mul = round(user.mul, 2)
+        sale_shop = round(user.sale_shop, 2)
+
+        return web_notice(
+            title="Ваш бонус недели снят",
+            message=f"Ваш множитель опыта теперь снова {mul}%, а скидка магазина {sale_shop}%, а Xp и Spoints вернулись к прежнему уровню",
+            task="revoke_weekly_bonus",
+        )
+
+async def delete_task(task):
+    notice = web_notice(
+        title=f"Задача {task.title} удалена",
+        type="delete_task"
+    )
+
+    return {
+        "message": "Task deleted",
+        "title": task.title,
+        "notice": notice.model_dump(),
+    }

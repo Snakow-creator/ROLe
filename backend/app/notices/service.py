@@ -1,8 +1,9 @@
 from pydantic import BaseModel, field_validator, Field
+from typing import Optional
 
 class WebNotice(BaseModel):
     title: str
-    message: str
+    message: Optional[str] = None
     type: str
     seconds: int = Field(default=10, gt=0)
 

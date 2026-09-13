@@ -11,6 +11,10 @@ import { TaskSubmitNotification } from "../components/webNotifications/types/Tas
 import { UpLevelNotification } from "../components/webNotifications/types/UpLevelNotification";
 import { TaskUnSubmitNotification } from "../components/webNotifications/types/TaskUnSubmitNotification";
 import { DownLevelNotification } from "../components/webNotifications/types/DownLevelNotification";
+import { DeleteTaskNotification } from "../components/webNotifications/types/DeleteTaskNotification";
+import { WeeklyBonusNotification } from "../components/webNotifications/types/WeeklyBonusNotification";
+import { RevokeWeeklyBonusNotification } from "../components/webNotifications/types/RevokeWeeklyBonusNotification";
+import { CreateTaskNotification } from "../components/webNotifications/types/CreateTaskNotification";
 
 
 function Task(creds) {
@@ -39,10 +43,13 @@ function Task(creds) {
       })
 
       creds.onNoticeReturnTask(data.notice)
-      console.log("unCompleteTask response:", data)
 
       if (data.notice_down_level) {
         creds.onNoticeDownLevel(data.notice_down_level)
+      }
+
+      if (data.notice_weekly_revoke_bonus) {
+        creds.onNoticeRevokeWeeklyBonus(data.notice_weekly_revoke_bonus)
       }
 
     } else {
@@ -56,14 +63,21 @@ function Task(creds) {
         creds.onNoticeUpLevel(data.notice_up_level)
       }
 
+      if (data.notice_weekly_claim_bonus) {
+        creds.onNoticeWeeklyBonus(data.notice_weekly_claim_bonus)
+      }
+
     }
   }
 
   const delTask = async () => {
     setTrashSrc("/task/trash_hover.png");
-    await deleteTask({
+    const data = await deleteTask({
       id: creds.id
     })
+    console.log("unCompleteTask response:", data)
+
+    creds.onNoticeDeleteTask(data.notice)
 
     creds.onUpdate();
   }
@@ -155,7 +169,10 @@ function CanbanDesk(creds) {
                 onNotice={creds.onNotice}
                 onNoticeUpLevel={creds.onNoticeUpLevel}
                 onNoticeReturnTask={creds.onNoticeReturnTask}
-                onNoticeDownLevel={creds.onNoticeDownLevel} />
+                onNoticeDownLevel={creds.onNoticeDownLevel}
+                onNoticeDeleteTask={creds.onNoticeDeleteTask}
+                onNoticeWeeklyBonus={creds.onNoticeWeeklyBonus}
+                onNoticeRevokeWeeklyBonus={creds.onNoticeRevokeWeeklyBonus} />
             ))
           }
         </div>
@@ -171,6 +188,7 @@ function CanbanDesk(creds) {
               }}>
               <FormCreateTask
                 onClickCancelButton={onClickCancelButton}
+                onNoticeCreateTask={creds.onNoticeCreateTask}
                 onUpdate={creds.onUpdate}
                 type={creds.type} />
             </div>
@@ -228,6 +246,23 @@ export default function Tasks() {
     push(new DownLevelNotification(notice));
   }
 
+  const handleNoticeDeleteTask = async (notice) => {
+    push(new DeleteTaskNotification(notice));
+  }
+
+  const handleNoticeWeeklyBonus = async (notice) => {
+    push(new WeeklyBonusNotification(notice));
+  }
+
+  const handleNoticeRevokeWeeklyBonus = async (notice) => {
+    push(new RevokeWeeklyBonusNotification(notice));
+  }
+
+  const handleNoticeCreateTask = async (notice) => {
+    push(new CreateTaskNotification(notice));
+  }
+
+
   const handleUpdate = async () => {
     fetchTasks();
   }
@@ -246,7 +281,11 @@ export default function Tasks() {
             onNotice={handleNotice}
             onNoticeUpLevel={handleNoticeUpLevel}
             onNoticeReturnTask={handleNoticeReturnTask}
-            onNoticeDownLevel={handleNoticeDownLevel} />
+            onNoticeDownLevel={handleNoticeDownLevel}
+            onNoticeDeleteTask={handleNoticeDeleteTask}
+            onNoticeWeeklyBonus={handleNoticeWeeklyBonus}
+            onNoticeRevokeWeeklyBonus={handleNoticeRevokeWeeklyBonus}
+            onNoticeCreateTask={handleNoticeCreateTask} />
 
         ))}
 

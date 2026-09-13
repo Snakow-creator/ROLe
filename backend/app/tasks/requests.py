@@ -27,11 +27,6 @@ async def complete_task(id, name):
     if len(tasks) == 1:
         points = points * task_bonus
 
-    # check completed hard tasks and add weekly bonus
-    if len(tasks) == 1 and task.type == "hard":
-        await weekly_bonus.claim(user)
-        complete_week = True
-
 
     # update last_streak if needed
     last_streak = user.last_streak.strftime("%Y-%m-%d")
@@ -59,6 +54,16 @@ async def complete_task(id, name):
         type="task_completed",
     ) # create notice
 
+    # create data
+    data = {
+        "message": "Task completed",
+        "isUpLevel": False,
+        "points": points,
+        "xp": points,
+        "notice": notice.model_dump(),
+        "is_weekly_bonus": False,
+    }
+
     # update level if current level higher than task level
     current_level = level_service.current(user.xp)
     if current_level > user.level:
@@ -69,24 +74,17 @@ async def complete_task(id, name):
             message="Вы получили бонус уровня +200 Spoints",
             type="up_level",
         )
-        return {
-            "message": "Task completed",
-            "isWeekly": True,
-            "points": points,
-            "notice": notice.model_dump(),
-            "notice_up_level": notice_lvl.model_dump(),
-            "xp": points,
-            "spointsLevel": res["points"],
-        }
+        data["notice_up_level"] = notice_lvl.model_dump()
+        data["isUpLevel"] = True
+        data["spointsLevel"] = res["points"]
 
-    return {
-        "message": "Task completed",
-        "isUpLevel": False,
-        "points": points,
-        "xp": points,
-        "notice": notice.model_dump(),
-        "isWeekly": complete_week
-    }
+    # check completed hard tasks and add weekly bonus
+    if len(tasks) == 1 and task.type == "hard":
+        notice_weekly_bonus = await weekly_bonus.claim(user)
+        data["is_weekly_bonus"] = True
+        data["notice_weekly_claim_bonus"] = notice_weekly_bonus.model_dump()
+
+    return data
 
 
 async def uncomplete_task(id, name):
@@ -94,15 +92,29 @@ async def uncomplete_task(id, name):
     task = await task_repo.get(id)
     user = await user_repo.get_by_name(name)
 
-    points = task.awarded_points
-    complete_week = task.is_weekly_bonus
+    points = task.awarded_points # points for completed task
+    complete_week = task.is_weekly_bonus # check if task is weekly bonus
 
     fpoints = round(points, 2) # formatted points
 
+    notice = web_notice(
+                title=f"Квест \"{task.title}\" отменен!",
+                message=f"{fpoints} Spoints и {fpoints} Xp были списаны",
+                type="task_uncompleted",
+        )
+
+    data = {
+        "message": "Task uncompleted",
+        "points": fpoints,
+        "xp": fpoints,
+        "notice": notice.model_dump(),
+    }
+
     # if task is weekly bonus unset bonus
     if task.is_weekly_bonus:
-        await weekly_bonus.revoke(user)
+        notice_weekly = await weekly_bonus.revoke(user)
         complete_week = False
+        data["notice_weekly_revoke_bonus"] = notice_weekly.model_dump()
 
     # task update, do task is active
     await task.update(
@@ -115,13 +127,7 @@ async def uncomplete_task(id, name):
     )
 
     # deprive user points
-    await edit_points(user, fpoints, task.type, -1)
-
-    notice = web_notice(
-            title=f"Квест \"{task.title}\" отменен!",
-            message=f"{fpoints} Spoints и {fpoints} Xp были списаны",
-            type="task_uncompleted",
-    )
+    await edit_points(user, points, task.type, -1)
 
 
     # update level if current level less than user level
@@ -134,17 +140,20 @@ async def uncomplete_task(id, name):
             message="Бонус уровня +200 Spoints был списан",
             type="down_level",
         )
-        return {
-                    "message": "Task uncompleted",
-                    "points": fpoints,
-                    "xp": fpoints,
-                    "notice": notice.model_dump(),
-                    "notice_down_level": notice_lvl.model_dump(),
-                }
+
+        data["notice_down_level"] = notice_lvl.model_dump()
+
+    return data
+
+
+async def delete_task(task):
+    notice = web_notice(
+        title=f"Задача {task.title} удалена",
+        type="delete_task"
+    )
 
     return {
-            "message": "Task uncompleted",
-            "points": fpoints,
-            "xp": fpoints,
-            "notice": notice.model_dump(),
-            }
+        "message": "Task deleted",
+        "title": task.title,
+        "notice": notice.model_dump(),
+    }
