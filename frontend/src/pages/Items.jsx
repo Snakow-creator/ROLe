@@ -3,11 +3,16 @@ import Container from "../components/Container";
 import Spinner from "../components/Spinner";
 
 import { useState, useEffect, useRef } from "react";
+import { useNotify } from "../context/NotificationContext";
 
 import { fetchBuyItem, fetchItems } from "../services/apiService/items";
 import { addItem, deleteItem } from "../services/apiService/items";
 import { cn } from "../hooks/utils";
 import FormCreateItem from "../components/forms/FormCreateItem";
+
+import { DeleteTaskNotification } from "../components/webNotifications/types/DeleteTaskNotification";
+import { CreateItemNotification } from "../components/webNotifications/types/CreateItemNotification";
+import { BuyItemNotification } from "../components/webNotifications/types/BuyitemNotification";
 
 
 function Item(creds) {
@@ -24,14 +29,19 @@ function Item(creds) {
   }
 
   const buyItem = async () => {
-    await fetchBuyItem(creds.id);
+    const res = await fetchBuyItem(creds.id);
+
+    creds.onHandleBuyItemNotice(res.data.notice)
+    creds.onUpdate();
   }
 
   const delItem = async (e) => {
     setTrashSrc("/task/trash_hover.png");
 
     e.preventDefault();
-    await deleteItem(creds.id);
+    const res = await deleteItem(creds.id);
+
+    creds.onHandleDeleteItemNotice(res.data.notice)
     creds.onUpdate();
   }
 
@@ -88,6 +98,17 @@ export default function Items() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFormCreateItem, setIsFormCreateItem] = useState(false);
 
+  const { push } = useNotify();
+
+
+  const handleBuyItem = async (notice) => {
+    push(new BuyItemNotification(notice));
+  }
+
+  const handleDeleteItem = async (notice) => {
+    push(new DeleteTaskNotification(notice));
+  }
+
   const updateItems = async () => {
     await fetchItems({setCurrentItems: data => {
       setItems(data);
@@ -139,7 +160,9 @@ export default function Items() {
   }
 
   const createItem = async (formData) => {
-    await addItem(formData);
+    const res = await addItem(formData);
+    console.log(res)
+    push(new CreateItemNotification(res.data.notice));
   }
 
   return (
@@ -230,6 +253,8 @@ export default function Items() {
               onUpdate={handleUpdate}
               price={item.price}
               type={item.type}
+              onHandleBuyItemNotice={handleBuyItem}
+              onHandleDeleteItemNotice={handleDeleteItem}
             />
           ))}
         </div>

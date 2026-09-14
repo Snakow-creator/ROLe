@@ -2,8 +2,6 @@ import Textarea from "../Textarea"
 import Select from "../Select"
 import Button from "../Button"
 
-import { addItem } from "../../services/apiService/items"
-
 import { useState } from "react"
 
 
@@ -26,7 +24,7 @@ export default function FormCreateItem(creds) {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    await addItem(formData);
+    await creds.onSubmit(formData);
     creds.onUpdate();
   }
 
