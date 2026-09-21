@@ -30,7 +30,7 @@ export const addItem = async (formData) => {
   }
 }
 
-export const deleteItem = async (id) => {
+export const  deleteItem = async (id) => {
   try {
     const res = await api.delete(`/delete/item/${id}`);
     return res

@@ -25,6 +25,7 @@ export default function FormCreateTask(creds) {
     e.preventDefault();
     const res = await addTask(formData);
 
+    creds.onNoticeCreateTask()
     creds.onClickCancelButton();
     creds.onUpdate();
   }

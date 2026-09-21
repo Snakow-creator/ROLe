@@ -6,15 +6,24 @@ import { getTasks, completeTask, unCompleteTask, deleteTask } from "../services/
 
 import { cn } from "../hooks/utils";
 import { quests_types } from "../data/data";
+import { useNotify } from "../context/NotificationContext";
+import { TaskSubmitNotification } from "../components/webNotifications/types/TaskNotification";
+import { UpLevelNotification } from "../components/webNotifications/types/UpLevelNotification";
+import { TaskUnSubmitNotification } from "../components/webNotifications/types/TaskUnSubmitNotification";
+import { DownLevelNotification } from "../components/webNotifications/types/DownLevelNotification";
+import { DeleteTaskNotification } from "../components/webNotifications/types/DeleteTaskNotification";
+import { WeeklyBonusNotification } from "../components/webNotifications/types/WeeklyBonusNotification";
+import { RevokeWeeklyBonusNotification } from "../components/webNotifications/types/RevokeWeeklyBonusNotification";
+import { CreateTaskNotification } from "../components/webNotifications/types/CreateTaskNotification";
 
 
 function Task(creds) {
   // className objects
   const [classTitle, setClassTitle] = useState("");
-
   const [showSubmit, setShowSubmit] = useState(false);
   const [isSubmit, setIsSubmit] = useState(false);
   const [trashSrc, setTrashSrc] = useState("/task/trash.png");
+
 
   function visibleSubmit() {
     setShowSubmit(true);
@@ -29,22 +38,46 @@ function Task(creds) {
   const submitTask = async () => {
     if (isSubmit) {
       setIsSubmit(false);
-      await unCompleteTask({
+      const data = await unCompleteTask({
         id: creds.id
       })
+
+      creds.onNoticeReturnTask(data.notice)
+
+      if (data.notice_down_level) {
+        creds.onNoticeDownLevel(data.notice_down_level)
+      }
+
+      if (data.notice_weekly_revoke_bonus) {
+        creds.onNoticeRevokeWeeklyBonus(data.notice_weekly_revoke_bonus)
+      }
+
     } else {
       setIsSubmit(true);
-      await completeTask({
+      const data = await completeTask({
         id: creds.id
       })
+      creds.onNotice(data.notice)
+
+      if (data.notice_up_level) {
+        creds.onNoticeUpLevel(data.notice_up_level)
+      }
+
+      if (data.notice_weekly_claim_bonus) {
+        creds.onNoticeWeeklyBonus(data.notice_weekly_claim_bonus)
+      }
+
     }
   }
 
   const delTask = async () => {
     setTrashSrc("/task/trash_hover.png");
-    await deleteTask({
+    const data = await deleteTask({
       id: creds.id
     })
+    console.log("unCompleteTask response:", data)
+
+    creds.onNoticeDeleteTask(data.notice)
 
     creds.onUpdate();
   }
@@ -74,7 +107,7 @@ function Task(creds) {
 
       {/* trash button */}
       <button
-        className={cn("absolute right-2 z-[10000] transition-opacity duration-300 cursor-pointer h-[25px] w-[25px]",
+        className={cn("absolute right-2 z-40 transition-opacity duration-300 cursor-pointer h-[25px] w-[25px]",
           showSubmit ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onMouseEnter={() => { setTrashSrc("/task/trash_hover.png") }}
@@ -132,7 +165,14 @@ function CanbanDesk(creds) {
                 id={_id}
                 title={title}
                 description={description}
-                onUpdate={creds.onUpdate} />
+                onUpdate={creds.onUpdate}
+                onNotice={creds.onNotice}
+                onNoticeUpLevel={creds.onNoticeUpLevel}
+                onNoticeReturnTask={creds.onNoticeReturnTask}
+                onNoticeDownLevel={creds.onNoticeDownLevel}
+                onNoticeDeleteTask={creds.onNoticeDeleteTask}
+                onNoticeWeeklyBonus={creds.onNoticeWeeklyBonus}
+                onNoticeRevokeWeeklyBonus={creds.onNoticeRevokeWeeklyBonus} />
             ))
           }
         </div>
@@ -148,6 +188,7 @@ function CanbanDesk(creds) {
               }}>
               <FormCreateTask
                 onClickCancelButton={onClickCancelButton}
+                onNoticeCreateTask={creds.onNoticeCreateTask}
                 onUpdate={creds.onUpdate}
                 type={creds.type} />
             </div>
@@ -174,6 +215,8 @@ export default function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [typeTasks, setTypeTasks] = useState([]);
 
+  const { push } = useNotify();
+
 
   const fetchTasks = async () => {
     await getTasks({
@@ -189,12 +232,43 @@ export default function Tasks() {
     fetchTasks();
   }, []);
 
+  const handleNotice = async (notice) => {
+    push(new TaskSubmitNotification(notice));
+  }
+  const handleNoticeUpLevel = async (notice) => {
+    push(new UpLevelNotification(notice));
+  }
+
+  const handleNoticeReturnTask = async (notice) => {
+    push(new TaskUnSubmitNotification(notice));
+  }
+  const handleNoticeDownLevel = async (notice) => {
+    push(new DownLevelNotification(notice));
+  }
+
+  const handleNoticeDeleteTask = async (notice) => {
+    push(new DeleteTaskNotification(notice));
+  }
+
+  const handleNoticeWeeklyBonus = async (notice) => {
+    push(new WeeklyBonusNotification(notice));
+  }
+
+  const handleNoticeRevokeWeeklyBonus = async (notice) => {
+    push(new RevokeWeeklyBonusNotification(notice));
+  }
+
+  const handleNoticeCreateTask = async (notice) => {
+    push(new CreateTaskNotification(notice));
+  }
+
+
   const handleUpdate = async () => {
     fetchTasks();
   }
 
   return (
-      isLoading
+    isLoading
       ? <Spinner />
       : <div className="flex items-start ml-2 mt-4 space-x-3">
         {typeTasks.map(type => (
@@ -203,8 +277,18 @@ export default function Tasks() {
             title={quests_types[type]}
             type={type}
             tasks={tasks}
-            onUpdate={handleUpdate} />
+            onUpdate={handleUpdate}
+            onNotice={handleNotice}
+            onNoticeUpLevel={handleNoticeUpLevel}
+            onNoticeReturnTask={handleNoticeReturnTask}
+            onNoticeDownLevel={handleNoticeDownLevel}
+            onNoticeDeleteTask={handleNoticeDeleteTask}
+            onNoticeWeeklyBonus={handleNoticeWeeklyBonus}
+            onNoticeRevokeWeeklyBonus={handleNoticeRevokeWeeklyBonus}
+            onNoticeCreateTask={handleNoticeCreateTask} />
+
         ))}
+
       </div>
   );
 };

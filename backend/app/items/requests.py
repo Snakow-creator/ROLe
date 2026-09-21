@@ -1,5 +1,7 @@
 from repositories import user_repo, shop_items_repo, items_repo
 
+from web_notices import buy_item_notice
+
 
 async def get_items(level, name):
     # get objects
@@ -14,18 +16,24 @@ async def get_items(level, name):
 
 
 async def buy_item(id, name):
-    item = await shop_items_repo.get(id)
-    user = await user_repo.get_by_name(name)
+    item = await shop_items_repo.get(id) # get item
+    user = await user_repo.get_by_name(name) # get user
 
-    price = -item.price * user.sale_shop
+    price = item.price * user.sale_shop # calculate price
 
     await user.update({
         "$inc": {
-            "Spoints": price
+            "Spoints": price * -1 # deprive points
         }
     })
+
+    notice = buy_item_notice(user, price, item)
 
     # insert buy item in db
     await items_repo.insert_item(item, name)
 
-    return {"message": f"Вы купили \"{item.title}\" за {abs(price)} Spoints", "title": item.title}
+    return {
+            "message": f"Item {item.title} bought",
+            "title": item.title,
+            "notice": notice,
+        }

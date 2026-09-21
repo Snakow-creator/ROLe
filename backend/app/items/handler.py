@@ -8,6 +8,7 @@ from models.schemas import ItemSchema
 from api.core.security import security
 from repositories import shop_items_repo
 from items.requests import get_items, buy_item
+from web_notices import create_item_notice, delete_item_notice
 
 
 router = APIRouter(tags=['items'])
@@ -49,6 +50,7 @@ async def handler_add_item(
             "min_level": int(creds.min_level)
         }
 
+
         if creds.min_level == 0:
             data["min_level"] = 1
 
@@ -70,9 +72,11 @@ async def handler_add_item(
             detail={"message": "Invalid min_level", "field": "min_level", "error": "Invalid min_level"}
         )
 
+    # insert item and send notice
     await shop_items_repo.insert_item(data)
+    notice = create_item_notice(creds)
 
-    return {"message": "Item added"}
+    return {"message": "Item added", "notice": notice}
 
 
 @router.delete('/delete/item/{id}', dependencies=[Depends(security.access_token_required)])
@@ -88,8 +92,10 @@ async def handler_delete_item(
             content={"message": "Unauthorized name", "error": "Unauthorized name"}
         )
 
-    await shop_item.delete()
 
-    return {"message": "Item deleted"}
+    await shop_item.delete()
+    notice = delete_item_notice(shop_item)
+
+    return {"message": "Item deleted", "notice": notice}
 
 

@@ -8,6 +8,9 @@
   --color-text: #1E293B;
   --color-background: #F2F4F7;
   --color-border: #E5E9F0;
+  
+  --animate-notification-enter: notification-enter 0.35s ease-out forwards;
+  --animate-notification-exit: notification-exit 0.35s ease-in forwards;
 }
 
 @layer base {
@@ -29,7 +32,42 @@
     border-color: #3A3A3A #2B2B2B10;
     animation: l1 1s infinite;
   }
-  
+
   @keyframes l1 {to{transform: rotate(.5turn)}}
+
+  @keyframes shrink {
+    from { width: 100%; }
+    to { width: 0%; }
+  }
+
+  .animate-shrink {
+    animation: shrink linear forwards;
+  }
+
+  @keyframes notification-enter {
+    from {
+      opacity: 0;
+      transform: translateX(120%);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes notification-exit {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    to {
+      opacity: 0;
+      transform: translateX(120%);
+    }
+  }
 }
+
+
 

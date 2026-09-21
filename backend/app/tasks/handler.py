@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from models.schemas import TaskSchema
 from models.models import Task, User
 
-from tasks.requests import complete_task, uncomplete_task
+from tasks.requests import complete_task, uncomplete_task, delete_task
 
 from repositories import task_repo, base_tasks_repo
 from baseTasks.data import list_baseTasks
@@ -41,7 +41,7 @@ async def add_task(
 
 
 @router.put("/complete/task/{id}", dependencies=[Depends(security.access_token_required)])
-async def edit_task(
+async def edit_complete_task(
     id: str,
     user: User = Depends(security.get_current_subject),
 ):
@@ -55,7 +55,7 @@ async def edit_task(
 
 
 @router.put("/uncomplete/task/{id}", dependencies=[Depends(security.access_token_required)])
-async def edit_task(
+async def edit_uncomplete_task(
     id: str,
     user: User = Depends(security.get_current_subject),
 ):
@@ -68,7 +68,7 @@ async def edit_task(
 
 
 @router.delete("/delete/task/{id}", dependencies=[Depends(security.access_token_required)])
-async def delete_task(
+async def edit_delete_task(
     id: str,
     user: User = Depends(security.get_current_subject),
 ):
@@ -77,5 +77,6 @@ async def delete_task(
         raise HTTPException(status_code=401, detail="Unauthorized, this task is not your")
 
     await task.delete()
-    return {"message": "Task deleted", "title": task.title}
+    res = await delete_task(task)
+    return res
 

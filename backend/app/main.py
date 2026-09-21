@@ -6,7 +6,6 @@ from contextlib import asynccontextmanager
 from models.models import User, Level, ShopItem, BaseTask, Task, Item, UsersAvatars
 from models.settings import settings, baseSettings
 from tasks import task_service
-from base.database import drop_tests_collection
 from users.requests import users_days_and_last_mul_expired
 from api.core.security import load_security_handle_errors
 from routers import init_router

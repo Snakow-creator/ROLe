@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from authx import AuthX, AuthXConfig
 from fastapi import FastAPI
+from fastapi.exceptions import HTTPException
+
 
 from models.models import User
 from models.settings import settings
@@ -28,5 +30,12 @@ def load_security_handle_errors(app: FastAPI):
 # create query in mongodb
 @security.set_subject_getter
 def get_user_from_uid(uid: str) -> User:
-    user = users.find_one({"name": uid})
+    try:
+        user = users.find_one({"name": uid})
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
     return user

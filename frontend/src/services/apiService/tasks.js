@@ -31,7 +31,7 @@ export async function completeTask(creds) {
     const res = await api.put(`/complete/task/${creds.id}`, {});
     // creds.onCompleteTask(res) уведомления
 
-    return res
+    return res.data
   } catch (error) {
     console.error(error);
     // creds.onError(error) уведомления
@@ -44,7 +44,7 @@ export async function unCompleteTask(creds) {
     const res = await api.put(`/uncomplete/task/${creds.id}`, {});
     // creds.onUncompleteTask(res) уведомления
 
-    return res
+    return res.data
   } catch (error) {
     console.error(error);
     // creds.onError(error) уведомления
@@ -57,7 +57,7 @@ export async function deleteTask(creds) {
     const res = await api.delete(`/delete/task/${creds.id}`);
     // creds.onDeleteTask(res.data.title); уведомления
 
-    return res
+    return res.data
   } catch (error) {
     console.error(error);
     // creds.onError(error) уведомления
