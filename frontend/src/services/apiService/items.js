@@ -6,6 +6,18 @@ export const fetchBuyItem = async (id) => {
     const res = await api.put(`/buy/item/${id}`);
     return res
   } catch (error) {
+    console.log("свааааага")
+    console.error(error);
+    if (error.response?.status == 402) {
+      const { message, notice } = error.response.data
+      return {
+        data: {
+          "message": message,
+          "notice": notice
+        },
+        status: 402
+      }
+    }
     console.error(error);
   }
 }

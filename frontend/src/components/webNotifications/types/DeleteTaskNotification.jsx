@@ -4,7 +4,7 @@ import { Notification } from "../notifications";
 export class DeleteTaskNotification extends Notification {
 
   constructor(task, duration) {
-    super(task.title, duration)
+    super(task.title, duration, task.type)
   }
 
   renderBody() {

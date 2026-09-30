@@ -1,6 +1,6 @@
 import Item from "../item/Item"
 
-export default function ItemsList({ items, handleUpdate, onBuy, onDelete }) {
+export default function ItemsList({ items, handleUpdate, onBuy, onDelete, onError }) {
   return (
     <>
       {items.map((item, index) => (
@@ -13,6 +13,7 @@ export default function ItemsList({ items, handleUpdate, onBuy, onDelete }) {
           onUpdate={handleUpdate}
           price={item.price}
           type={item.type}
+          onHandleErrorItemNotice={onError}
           onHandleBuyItemNotice={onBuy}
           onHandleDeleteItemNotice={onDelete}
         />

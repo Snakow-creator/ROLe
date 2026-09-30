@@ -38,6 +38,15 @@ def get_delete_item_notification(item):
     return notice.model_dump()
 
 
+def error_item_notification(error_title: str):
+    notice = web_notice(
+        title=error_title,
+        type="error",
+    )
+
+    return notice.model_dump()
+
+
 
 
 
