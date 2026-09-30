@@ -1,6 +1,6 @@
 from pydantic import Field, ConfigDict
 from beanie import Document, Indexed
-from pymongo import IndexModel
+from pymongo import IndexModel, ASCENDING
 from typing import Annotated, Optional
 
 from datetime import datetime, timezone
@@ -106,8 +106,7 @@ class Task(Document):
     # основные данные
     title: str = Field(min_length=1, max_length=100, description="Название квеста")
     description: str = Field(max_length=255, description="Описание квеста")
-    type: str = Field(description="Тип квеста")
-    user: str = Field(description="Пользователь, который зарегистрировал квест")
+    board_id: str = Field(min_length=1, max_length=50, description="ID канбана")
     # дата создания и завершения
     date: Optional[datetime] = datetime.now(timezone.utc).replace(
         hour=0, minute=0, second=0, microsecond=0
@@ -127,6 +126,7 @@ class Task(Document):
 
     class Settings:
         name = "tasks"
+        indexes = [IndexModel([("user", ASCENDING), ("board_id", ASCENDING), ("position", ASCENDING)])]
 
 
 class Notice(Document):
@@ -136,7 +136,7 @@ class Notice(Document):
     hidden: bool = Field(default=False, description="Скрыть уведомление")
     if_bonus: bool = Field(default=False, description="Бонус")
     id_bonus: str = Field(default=None, description="ID бонуса")
-    
+
     date: Optional[datetime] = datetime.now(timezone.utc)
 
 
@@ -156,3 +156,18 @@ class Avatar_Item(Document):
 
     class Settings:
         name = "avatar_items"
+
+
+class Board(Document):
+    username: str = Field(min_length=1, max_length=20, description="Имя пользователя")
+    title: str = Field(min_length=1, max_length=100, description="Название канбана")
+    order: int = Field(default=0, description="Порядок отображения")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    model_config = ConfigDict(extra="forbid")
+
+    class Settings:
+        name = "boards"
+        indexes = [
+            IndexModel([("username", ASCENDING), ("order", ASCENDING)]),
+        ]
