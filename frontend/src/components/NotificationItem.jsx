@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react"
 
+import { cn } from "../hooks/utils"
+
 // notification container
-export function NotificationItem ({ notification, onRemove }) {
+export function NotificationItem ({ notification, onRemove, isError }) {
   const [isLeaving, setIsLeaving] = useState(false)
   const exitDuration = 300 // мс, должно совпадать с длительностью slideOutRight
 
@@ -46,7 +48,10 @@ export function NotificationItem ({ notification, onRemove }) {
 
       <div className="absolute bottom-0 left-0 h-1 bg-[#E5E5E5] w-full">
         <div
-          className="bg-green-500 h-full animate-shrink"
+          className={cn(
+            "bg-green-500 h-full animate-shrink",
+            notification.type === "error" && "bg-red-500"
+          )}
           style={{ animationDuration: `${notification.duration}ms` }}
         />
       </div>

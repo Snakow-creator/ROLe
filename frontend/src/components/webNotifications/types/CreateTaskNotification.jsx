@@ -4,7 +4,7 @@ import { Notification } from "../notifications";
 export class CreateTaskNotification extends Notification {
 
   constructor(duration) {
-    super("Квест создан!", duration)
+    super("Квест создан!", duration, "create_task")
   }
 
   renderBody() {

@@ -1,6 +1,8 @@
 from repositories import user_repo
 from datetime import datetime, timezone
 
+from errors.points import NotEnoughSpointsError
+
 
 async def users_days_and_last_mul_expired():
     # get users
@@ -14,8 +16,6 @@ async def users_days_and_last_mul_expired():
         # expire last_mul
         if (datetime.utcnow() - user.last_mul).days >= 14 and user.mul != 1:
             await user.update({"$set": {"mul": 1, "sale_shop": 1}})
-
-
 
 
 async def edit_level(name, level):
@@ -50,6 +50,15 @@ async def edit_points(user, points, type, o=1):
             f"complete_{type}_tasks": o,
         }}
     )
+
+async def deprive_points_buy_item(user, points):
+    # deprive user points by buy item
+    # if points doesn't enough raise
+
+    if user.Spoints < points:
+        raise NotEnoughSpointsError
+
+    await user.update({"$inc": {"Spoints": points * -1}})
 
 
 async def up_streak(user):

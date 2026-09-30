@@ -10,8 +10,6 @@ from repositories import task_repo, base_tasks_repo
 from baseTasks.data import list_baseTasks
 from api.core.security import security
 
-import logging
-
 
 router = APIRouter(tags=["tasks"])
 

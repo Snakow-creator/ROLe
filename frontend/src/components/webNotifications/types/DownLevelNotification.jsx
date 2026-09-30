@@ -3,7 +3,7 @@ import { Notification } from "../notifications"
 // требует только название задачи и длительность и сообщение
 export class DownLevelNotification extends Notification {
   constructor(task, duration) {
-    super(task.title, duration)
+    super(task.title, duration, task.type)
     this.task = task
     this.infoMessage = task.message
   }

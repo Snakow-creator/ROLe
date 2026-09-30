@@ -5,7 +5,7 @@ import { getMessageTask } from "../../../hooks/messages";
 export class TaskSubmitNotification extends Notification {
 
   constructor(task, duration) {
-    super(task.title, duration)
+    super(task.title, duration, task.type)
     this.task = task
     this.infoMessage = task.message
     this.message = getMessageTask()

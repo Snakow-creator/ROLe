@@ -2,10 +2,11 @@ let idCounter = 0
 
 // object of notification
 export class Notification {
-  constructor(title, duration = 7000) {
+  constructor(title, duration = 7000, type = "default") {
     this.id = ++idCounter
     this.title = title
     this.duration = duration
+    this.type = type
     this.createdAt = Date.now()
   }
 

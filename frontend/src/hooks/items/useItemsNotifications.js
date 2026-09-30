@@ -3,12 +3,17 @@ import { useNotify } from "../../context/NotificationContext";
 import { CreateItemNotification } from "../../components/webNotifications/types/CreateItemNotification";
 import { BuyItemNotification } from "../../components/webNotifications/types/BuyitemNotification";
 import { DeleteTaskNotification } from "../../components/webNotifications/types/DeleteTaskNotification";
+import { ErrorItemNotification } from "../../components/webNotifications/types/ErrorItemNotification";
 import { addItem } from "../../services/apiService/items";
 
 
 
 export function useItemsNotification () {
   const { push } = useNotify();
+
+  const handleErrorItem = async (notice) => {
+    push(new ErrorItemNotification(notice));
+  }
 
   const handleBuyItem = async (notice) => {
     push(new BuyItemNotification(notice));
@@ -23,6 +28,6 @@ export function useItemsNotification () {
     push(new CreateItemNotification(res.data.notice));
   }
 
-  return { handleBuyItem, handleDeleteItem, createItem }
+  return { handleBuyItem, handleDeleteItem, createItem, handleErrorItem }
 
 }

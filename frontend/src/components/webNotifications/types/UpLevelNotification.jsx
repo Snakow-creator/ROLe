@@ -4,7 +4,7 @@ import { getMessageLevel } from "../../../hooks/messages"
 // требует только название задачи и длительность
 export class UpLevelNotification extends Notification {
   constructor(task, duration) {
-    super(task.title, duration)
+    super(task.title, duration, task.type)
     this.task = task
     this.infoMessage = task.message
     this.message = getMessageLevel() // random message level

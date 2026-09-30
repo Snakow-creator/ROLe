@@ -12,7 +12,7 @@ export function NotificationProvider({ children }) {
       {children}
       <div className="fixed flex flex-col-reverse items-start space-y-2 space-y-reverse right-[30px] bottom-[25px] w-[400px] z-50">
         {notifications.map((n) => (
-          <NotificationItem key={n.id} notification={n} onRemove={remove} />
+          <NotificationItem key={n.id} notification={n} onRemove={remove} isError={n.type == "error" ? true : false} />
         ))}
       </div>
     </NotificationContext.Provider>

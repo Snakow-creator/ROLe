@@ -3,7 +3,7 @@ import { Notification } from "../notifications";
 
 export class BuyItemNotification extends Notification {
   constructor(data, duration) {
-    super(data.title, duration)
+    super(data.title, duration, data.type)
     this.data = data
     this.message = data.message
   }

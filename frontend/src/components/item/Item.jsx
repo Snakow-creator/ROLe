@@ -23,7 +23,12 @@ export default function Item(creds) {
   const buyItem = async () => {
     const res = await fetchBuyItem(creds.id);
 
-    creds.onHandleBuyItemNotice(res.data.notice)
+    if (res.status == 402) {
+      creds.onHandleErrorItemNotice(res.data.notice)
+    } else {
+      creds.onHandleBuyItemNotice(res.data.notice)
+    }
+
     creds.onUpdate();
   }
 

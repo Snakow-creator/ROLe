@@ -9,13 +9,13 @@ import { useItemsNotification } from "../hooks/items/useItemsNotifications";
 import { useOutsideClick } from "../hooks/items/useOutsideClick";
 
 import ItemsToolbar from "../components/items/itemsToolbar";
-import  ItemsList  from "../components/items/itemsList";
+import ItemsList  from "../components/items/itemsList";
 import ItemsCreateSelection from "../components/items/ItemsCreateSelection";
 
 
 export default function Items() {
   const { allItems, items, setItems, isLoading, updateItems} = useItemsList();
-  const { handleBuyItem, handleDeleteItem, createItem } = useItemsNotification();
+  const { handleBuyItem, handleDeleteItem, createItem, handleErrorItem } = useItemsNotification();
   const { onChangeFilter, onChangeSort } = useItemsFilterSort(allItems, setItems);
 
   const [isFormCreateItem, setIsFromCreateItem] = useState(false);
@@ -49,6 +49,7 @@ export default function Items() {
             handleUpdate={updateItems}
             onBuy={handleBuyItem}
             onDelete={handleDeleteItem}
+            onError={handleErrorItem}
           />
         </div>
       </div>
