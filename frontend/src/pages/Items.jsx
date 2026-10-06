@@ -8,8 +8,8 @@ import { useItemsFilterSort } from "../hooks/items/useFilterSort";
 import { useItemsNotification } from "../hooks/items/useItemsNotifications";
 import { useOutsideClick } from "../hooks/items/useOutsideClick";
 
-import ItemsToolbar from "../components/items/itemsToolbar";
-import ItemsList  from "../components/items/itemsList";
+import ItemsToolbar from "../components/items/ItemsToolbar";
+import ItemsList from "../components/items/ItemsList";
 import ItemsCreateSelection from "../components/items/ItemsCreateSelection";
 
 
@@ -41,16 +41,14 @@ export default function Items() {
             setIsFormOpen={setIsFromCreateItem}
             formRef={formCreateItemRef}
             onSubmit={createItem}
-            onUpdate={updateItems}
-          />
+            onUpdate={updateItems}/>
           {/* get formated items list */}
           <ItemsList
             items={items}
             handleUpdate={updateItems}
             onBuy={handleBuyItem}
             onDelete={handleDeleteItem}
-            onError={handleErrorItem}
-          />
+            onError={handleErrorItem}/>
         </div>
       </div>
     </Container>
