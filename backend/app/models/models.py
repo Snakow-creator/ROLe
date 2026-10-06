@@ -102,6 +102,9 @@ class Item(Document):
         name = "items"
 
 
+# old tasks data:
+# type - type of board
+# change type -> board_id
 class Task(Document):
     # основные данные
     title: str = Field(min_length=1, max_length=100, description="Название квеста")

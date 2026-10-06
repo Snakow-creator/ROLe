@@ -1,7 +1,7 @@
 import { useNotify } from "../../context/NotificationContext";
 
 import { CreateItemNotification } from "../../components/webNotifications/types/CreateItemNotification";
-import { BuyItemNotification } from "../../components/webNotifications/types/BuyitemNotification";
+import { BuyItemNotification } from "../../components/webNotifications/types/BuyItemNotification";
 import { DeleteTaskNotification } from "../../components/webNotifications/types/DeleteTaskNotification";
 import { ErrorItemNotification } from "../../components/webNotifications/types/ErrorItemNotification";
 import { addItem } from "../../services/apiService/items";
