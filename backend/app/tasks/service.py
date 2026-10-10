@@ -1,16 +1,18 @@
-from repositories import task_repo
+from repositories import task_repo, board_repo
 
-from tasks.data import tasks_expired
-
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class TaskService:
     @staticmethod
     async def update():
-        tasks = await task_repo.find_all()
+        now = datetime.now(timezone.utc)
 
-        for task in tasks:
-            if tasks_expired[task.type] != None:
-                if (datetime.utcnow() - task.date).days >= tasks_expired[task.type]:
-                    await task.update({"$set": {"inactive": True}})
+        # get inexpired boards
+        boards = await board_repo.get_expire_boards()
+
+        for board in boards:
+            days = board["_id"]
+            border = now - datetime.timedelta(days=days)
+
+            await task_repo.update_expired_task(board["board_id"], border)

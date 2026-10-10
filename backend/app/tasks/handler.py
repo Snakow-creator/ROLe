@@ -6,7 +6,7 @@ from models.models import Task, User
 
 from tasks.requests import complete_task, uncomplete_task, delete_task
 
-from repositories import task_repo, base_tasks_repo
+from repositories import task_repo, board_repo
 from baseTasks.data import list_baseTasks
 from api.core.security import security
 
@@ -20,9 +20,9 @@ async def tasks(
 ):
 
     tasks = await task_repo.get_user_tasks(user["name"])
-    type_tasks = await base_tasks_repo.get_base_tasks(user['name'])
+    boards = await board_repo.get_boards(user["name"])
 
-    return {"message": "Success", "tasks": tasks, "type_tasks": type_tasks}
+    return {"message": "Success", "tasks": tasks, "boards": boards}
 
 
 @router.post("/add/task", dependencies=[Depends(security.access_token_required)])
@@ -30,9 +30,6 @@ async def add_task(
     creds: TaskSchema,
     user: User = Depends(security.get_current_subject),
 ):
-    if creds.type not in list_baseTasks:
-        raise HTTPException(status_code=400, detail="Invalid task type")
-
     await task_repo.insert_task(creds, user["name"])
 
     return {"message": "Task added"}

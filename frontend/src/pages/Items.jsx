@@ -9,7 +9,7 @@ import { useItemsNotification } from "../hooks/items/useItemsNotifications";
 import { useOutsideClick } from "../hooks/items/useOutsideClick";
 
 import ItemsToolbar from "../components/items/ItemsToolbar";
-import ItemsList  from "../components/items/ItemsList";
+import ItemsList from "../components/items/ItemsList";
 import ItemsCreateSelection from "../components/items/ItemsCreateSelection";
 
 

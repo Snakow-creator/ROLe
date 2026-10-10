@@ -1,14 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import AsyncMongoClient
 from contextlib import asynccontextmanager
 
-from models.models import User, Level, ShopItem, BaseTask, Task, Item, UsersAvatars
+from models.models import *
 from models.settings import settings, baseSettings
 from tasks import task_service
 
 from users.requests import users_days_and_last_mul_expired
 from api.core.security import load_security_handle_errors
+from migrations.boards import migrate_tasks_to_boards
 from routers import init_router
 from utils import load_data
 
@@ -21,15 +22,19 @@ logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def main(app: FastAPI):
-    client = AsyncIOMotorClient(settings.mongo_url)
+    client = AsyncMongoClient(settings.mongo_url)
     collection = settings.collection_name
     # initialize db
     await beanie.init_beanie(
         database=client[collection],
-        document_models=[User, Level, ShopItem, BaseTask, Task, Item, UsersAvatars],
+        document_models=[User, Level, ShopItem, BaseTask, Task, Item, UsersAvatars, Board],
     )
+
+    # migrate tasks to boards
+    await migrate_tasks_to_boards()
+
     # expire tasks and users data
-    await task_service.update()
+    await task_service.update() # expire tasks
     await users_days_and_last_mul_expired()
 
     # init handle errors

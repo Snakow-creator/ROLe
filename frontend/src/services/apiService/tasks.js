@@ -14,6 +14,7 @@ export const getTasks = async (creds) => {
 }
 
 
+// add catch error task
 export async function addTask(formData) {
   try {
     const res = await api.post("/add/task", formData);
@@ -21,7 +22,7 @@ export async function addTask(formData) {
 
   } catch (error) {
     console.error(error);
-    return false
+    return error
   }
 };
 

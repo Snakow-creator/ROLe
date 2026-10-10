@@ -110,6 +110,7 @@ class Task(Document):
     title: str = Field(min_length=1, max_length=100, description="Название квеста")
     description: str = Field(max_length=255, description="Описание квеста")
     board_id: str = Field(min_length=1, max_length=50, description="ID канбана")
+    user: str = Field(description="Пользователь, который зарегистрировал квест")
     # дата создания и завершения
     date: Optional[datetime] = datetime.now(timezone.utc).replace(
         hour=0, minute=0, second=0, microsecond=0
@@ -133,7 +134,7 @@ class Task(Document):
 
 
 class Notice(Document):
-    id_name: str = Field(min_length=1, max_length=50, description="ID пользователя")
+    name: str = Field(min_length=1, max_length=50, description="ID пользователя")
     id: int = Field(gt=0, description="ID уведомления", unique=True)
     message: str = Field(min_length=1, max_length=255, description="Текст уведомления")
     hidden: bool = Field(default=False, description="Скрыть уведомление")
@@ -166,6 +167,8 @@ class Board(Document):
     title: str = Field(min_length=1, max_length=100, description="Название канбана")
     order: int = Field(default=0, description="Порядок отображения")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    is_weekly: bool = Field(default=False, description="Есть ли недельный бонус")
+    task_expire_days: int | None = Field(default=None, description="Дни на выполнение квеста")
 
     model_config = ConfigDict(extra="forbid")
 

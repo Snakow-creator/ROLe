@@ -34,17 +34,26 @@ class TaskRepository(BaseRepository):
 
         return tasks
 
+    async def update_expired_task(self, board_id, border):
+        await self.model.find(
+            {
+                "board_id": {"$in": board_id},
+                "inactive": False,
+                "completed": False,
+                "date": {"$lt": border}
+            }
+        ).update({"$set": {"inactive": True}})
+
+
     async def insert_task(self, creds, name):
         # insert task with data to mongodb
         task = self.model(
           title=creds.title,
           description=creds.description,
-          type=creds.type,
+          board_id=creds.board_id,
           user=name,
           date=creds.date,
         )
 
         await task.insert()
         return task
-
-task_repo = TaskRepository()

@@ -5,7 +5,6 @@ import Spinner from "../components/Spinner";
 import { getTasks, completeTask, unCompleteTask, deleteTask } from "../services/apiService/tasks";
 
 import { cn } from "../hooks/utils";
-import { quests_types } from "../data/data";
 import { useNotify } from "../context/NotificationContext";
 import { TaskSubmitNotification } from "../components/webNotifications/types/TaskNotification";
 import { UpLevelNotification } from "../components/webNotifications/types/UpLevelNotification";
@@ -15,6 +14,7 @@ import { DeleteTaskNotification } from "../components/webNotifications/types/Del
 import { WeeklyBonusNotification } from "../components/webNotifications/types/WeeklyBonusNotification";
 import { RevokeWeeklyBonusNotification } from "../components/webNotifications/types/RevokeWeeklyBonusNotification";
 import { CreateTaskNotification } from "../components/webNotifications/types/CreateTaskNotification";
+import { ErrorCreateTaskNotification } from "../components/webNotifications/types/ErrorCreateTaskNotification";
 
 
 function Task(creds) {
@@ -159,7 +159,7 @@ function CanbanDesk(creds) {
 
         <div className="mt-2 space-y-2 w-full">
           {creds.tasks
-            .filter(task => task.type === creds.type)
+            .filter(task => task.board_id === creds.board_id)
             .map(({ _id, title, description }) => (
               <Task key={_id}
                 id={_id}
@@ -189,8 +189,9 @@ function CanbanDesk(creds) {
               <FormCreateTask
                 onClickCancelButton={onClickCancelButton}
                 onNoticeCreateTask={creds.onNoticeCreateTask}
+                onNoticeErrorCreateTask={creds.onNoticeErrorCreateTask}
                 onUpdate={creds.onUpdate}
-                type={creds.type} />
+                board_id={creds.board_id} />
             </div>
           ) : (
             <button
@@ -213,7 +214,7 @@ export default function Tasks() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [tasks, setTasks] = useState([]);
-  const [typeTasks, setTypeTasks] = useState([]);
+  const [boards, setBoards] = useState([]);
 
   const { push } = useNotify();
 
@@ -222,7 +223,8 @@ export default function Tasks() {
     await getTasks({
       onFinish: data => {
         setTasks(data.tasks);
-        setTypeTasks(data.type_tasks);
+        setBoards(data.boards);
+        console.log(data)
         setIsLoading(false);
       }
     });
@@ -262,6 +264,10 @@ export default function Tasks() {
     push(new CreateTaskNotification(notice));
   }
 
+  const handleNoticeErrorCreateTask = async (notice) => {
+    push(new ErrorCreateTaskNotification(notice));
+  }
+
 
   const handleUpdate = async () => {
     fetchTasks();
@@ -271,11 +277,11 @@ export default function Tasks() {
     isLoading
       ? <Spinner />
       : <div className="flex items-start ml-2 mt-4 space-x-3">
-        {typeTasks.map(type => (
+        {boards.map(board => (
           <CanbanDesk
-            key={type}
-            title={quests_types[type]}
-            type={type}
+            key={board.title}
+            title={board.title}
+            board_id={board._id}
             tasks={tasks}
             onUpdate={handleUpdate}
             onNotice={handleNotice}
@@ -285,7 +291,8 @@ export default function Tasks() {
             onNoticeDeleteTask={handleNoticeDeleteTask}
             onNoticeWeeklyBonus={handleNoticeWeeklyBonus}
             onNoticeRevokeWeeklyBonus={handleNoticeRevokeWeeklyBonus}
-            onNoticeCreateTask={handleNoticeCreateTask} />
+            onNoticeCreateTask={handleNoticeCreateTask}
+            onNoticeErrorCreateTask={handleNoticeErrorCreateTask} />
 
         ))}
 

@@ -17,7 +17,7 @@ class RegisterUserSchema(BaseModel):
 class TaskSchema(BaseModel):
     title: str = Field(max_length=100, description="Название квеста")
     description: str = Field(max_length=255, description="Описание квеста")
-    type: str = Field(description="Тип квеста")
+    board_id: str = Field(min_length=1, max_length=50, description="ID канбана")
     date: Optional[datetime] = Field(description="Дата запланированного квеста")
 
 

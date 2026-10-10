@@ -10,7 +10,7 @@ export default function FormCreateTask(creds) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    type: creds.type,
+    board_id: creds.board_id,
     date: new Date().toISOString().split('T')[0],
   })
 
@@ -24,6 +24,11 @@ export default function FormCreateTask(creds) {
   const onSubmit = async (e) => {
     e.preventDefault();
     const res = await addTask(formData);
+
+    if (res.response?.status == 422) {
+      creds.onNoticeErrorCreateTask()
+      return
+    }
 
     creds.onNoticeCreateTask()
     creds.onClickCancelButton();

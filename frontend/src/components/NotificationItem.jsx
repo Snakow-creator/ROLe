@@ -50,7 +50,7 @@ export function NotificationItem ({ notification, onRemove, isError }) {
         <div
           className={cn(
             "bg-green-500 h-full animate-shrink",
-            notification.type === "error" && "bg-red-500"
+            isError && "bg-red-500"
           )}
           style={{ animationDuration: `${notification.duration}ms` }}
         />
