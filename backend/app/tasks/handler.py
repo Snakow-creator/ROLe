@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from models.schemas import TaskSchema
 from models.models import Task, User
+from beanie import PydanticObjectId
 
 from tasks.requests import complete_task, uncomplete_task, delete_task
 
@@ -37,10 +38,12 @@ async def add_task(
 
 @router.put("/complete/task/{id}", dependencies=[Depends(security.access_token_required)])
 async def edit_complete_task(
-    id: str,
+    id: PydanticObjectId,
     user: User = Depends(security.get_current_subject),
 ):
     task = await task_repo.get(id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
 
     if task.user != user["name"]:
         raise HTTPException(status_code=401, detail="Unauthorized, this task is not your")
@@ -51,10 +54,12 @@ async def edit_complete_task(
 
 @router.put("/uncomplete/task/{id}", dependencies=[Depends(security.access_token_required)])
 async def edit_uncomplete_task(
-    id: str,
+    id: PydanticObjectId,
     user: User = Depends(security.get_current_subject),
 ):
     task = await task_repo.get(id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
     if task.user != user["name"]:
         raise HTTPException(status_code=401, detail="Unauthorized, this task is not your")
 
@@ -64,10 +69,12 @@ async def edit_uncomplete_task(
 
 @router.delete("/delete/task/{id}", dependencies=[Depends(security.access_token_required)])
 async def edit_delete_task(
-    id: str,
+    id: PydanticObjectId,
     user: User = Depends(security.get_current_subject),
 ):
     task = await task_repo.get(id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
     if task.user != user["name"]:
         raise HTTPException(status_code=401, detail="Unauthorized, this task is not your")
 

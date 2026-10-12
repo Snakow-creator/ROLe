@@ -5,7 +5,7 @@ from authx import AuthXDependency
 from models.models import User
 from models.schemas import UserSchema, RegisterUserSchema
 from users import user_service
-from repositories import user_repo
+from repositories import user_repo, board_repo
 
 from api.core.crypt import hash_password, verify_password
 from api.auth.service import auth
@@ -107,11 +107,14 @@ async def profile(
             "sale_shop": user["sale_shop"],
             "last_streak": user["last_streak"],
             "last_mul": user["last_mul"],
-            "complete_simple_tasks": user["complete_simple_tasks"],
-            "complete_common_tasks": user["complete_common_tasks"],
-            "complete_hard_tasks": user["complete_hard_tasks"],
-            "complete_expert_tasks": user["complete_expert_tasks"],
-            "complete_hardcore_tasks": user["complete_hardcore_tasks"],
+            "boards": [
+                {
+                    "_id": str(board.id),
+                    "title": board.title,
+                    "completed_tasks": board.completed_tasks,
+                }
+                for board in await board_repo.get_boards(user["name"]) # get boards to show complete tasks
+            ],
         }
         return data
     except Exception:

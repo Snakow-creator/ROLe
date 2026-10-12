@@ -1,6 +1,6 @@
 from repositories import task_repo, board_repo
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 
 class TaskService:
@@ -13,6 +13,6 @@ class TaskService:
 
         for board in boards:
             days = board["_id"]
-            border = now - datetime.timedelta(days=days)
+            border = now - timedelta(days=days)
 
             await task_repo.update_expired_task(board["board_id"], border)

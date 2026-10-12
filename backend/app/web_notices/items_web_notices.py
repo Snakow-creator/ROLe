@@ -3,11 +3,11 @@ from notices import web_notice
 from base.format import fmt_points
 
 # notice buy item
-def get_buy_item_notification(user, price, item):
+def get_buy_item_notification(user, price, item, balance_before=None):
 
     # format data
-    before = fmt_points(user.Spoints)
-    after = fmt_points(user.Spoints - price)
+    before = fmt_points(user.Spoints + price if balance_before is None else balance_before)
+    after = fmt_points(user.Spoints)
     str_price = fmt_points(abs(price))
 
     notice = web_notice(

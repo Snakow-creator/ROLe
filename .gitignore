@@ -68,7 +68,6 @@ Thumbs.db
 .env
 .env.docker
 pyproject.toml
-pytest.ini
 tests/
 
 # Logs

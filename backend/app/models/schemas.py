@@ -22,8 +22,8 @@ class TaskSchema(BaseModel):
 
 
 class ItemSchema(BaseModel):
-    title: str = Field(max_length=100, description="Название товара")
+    title: str = Field(min_length=1, max_length=100, description="Название товара")
     description: str = Field(max_length=255, description="Описание товара")
-    price: str | int = Field(min_length=1, description="Цена товара")
+    price: float = Field(gt=0, allow_inf_nan=False, description="Цена товара")
     type: str = Field(min_length=1, max_length=20, description="Тип товара")
-    min_level: str | int = Field(description="Минимальный уровень для покупки")
+    min_level: int = Field(ge=0, description="Минимальный уровень для покупки")

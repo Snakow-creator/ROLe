@@ -22,11 +22,11 @@ class TaskRepository(BaseRepository):
         return tasks
 
 
-    async def get_user_tasks_by_type(self, name, type):
+    async def get_user_tasks_by_board_id(self, name, board_id):
         # get user tasks by filters and type
         tasks = await self.model.find(
             Task.user == name,
-            Task.type == type,
+            Task.board_id == board_id,
             Task.completed == False,
             Task.inactive == False,
             Task.date <= datetime.now(timezone.utc),

@@ -25,13 +25,6 @@ class User(Document):
     penult_mul: float = Field(default=1, ge=0)
     penult_sale_shop: float = Field(default=1, ge=0)
     penult_last_mul: datetime = datetime.now(timezone.utc)
-    # завершенные задания
-    complete_simple_tasks: int = Field(default=0, ge=0)
-    complete_common_tasks: int = Field(default=0, ge=0)
-    complete_hard_tasks: int = Field(default=0, ge=0)
-    complete_expert_tasks: int = Field(default=0, ge=0)
-    complete_hardcore_tasks: int = Field(default=0, ge=0)
-
     model_config = ConfigDict(extra="forbid")
 
     class Settings:
@@ -78,10 +71,10 @@ class Level(Document):
 class ShopItem(Document):
     title: str = Field(max_length=100, description="Название товара")
     description: str = Field(max_length=255, description="Описание товара")
-    price: int = Field(gt=0, description="Цена товара")
+    price: float = Field(gt=0, allow_inf_nan=False, description="Цена товара")
     creator: str = Field(min_length=1, description="Пользователь, который создал товар")
     type: str = Field(min_length=1, max_length=20,description="Тип товара")
-    min_level: int = Field(gte=0, description="Минимальный уровень для покупки")
+    min_level: int = Field(ge=0, description="Минимальный уровень для покупки")
 
     model_config = ConfigDict(extra="forbid")
 
@@ -92,7 +85,7 @@ class ShopItem(Document):
 class Item(Document):
     title: str = Field(max_length=100, description="Название товара")
     description: str = Field(max_length=255, description="Описание товара")
-    price: int = Field(gt=0, description="Цена товара")
+    price: float = Field(ge=0, allow_inf_nan=False, description="Цена товара")
     name: str = Field(description="Пользователь, который купил товар")
     date: Optional[datetime] = datetime.now(timezone.utc)
 
@@ -125,6 +118,7 @@ class Task(Document):
     is_weekly_bonus: bool = Field(default=False, description="Недельный бонус")
     # сколько начислено поинтов за задание(если было выполнено)
     awarded_points: float = Field(default=0, ge=0, description="Поинты за квест")
+    awarded_xp: float | None = Field(default=None, ge=0, description="Начисленный опыт за квест")
 
     model_config = ConfigDict(extra="forbid")
 
@@ -167,6 +161,9 @@ class Board(Document):
     title: str = Field(min_length=1, max_length=100, description="Название канбана")
     order: int = Field(default=0, description="Порядок отображения")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    award_points: int = Field(default=0, ge=0, description="Поинты канбана")
+    award_xp: int = Field(default=0, ge=0, description="Опыт канбана")
+    completed_tasks: int = Field(default=0, ge=0, description="Количество выполненных квестов")
     is_weekly: bool = Field(default=False, description="Есть ли недельный бонус")
     task_expire_days: int | None = Field(default=None, description="Дни на выполнение квеста")
 

@@ -1,7 +1,8 @@
 # migrations/boards.py
 import logging
 
-from models.models import Board, Task
+from baseTasks.data import baseTasks_points
+from models.models import Board, Task, User
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +16,39 @@ OLD_DEFAULT_BOARDS = {
 }
 DEFAULT_BOARD = ("Прочее", 5, None)
 
+
+async def _backfill_board_awards():
+    boards_col = Board.get_pymongo_collection()
+    updated = 0
+
+    # Restore the old rewards without overwriting configured board rewards.
+    for old_type, (title, _, _) in OLD_DEFAULT_BOARDS.items():
+        award = baseTasks_points[old_type]
+        for field in ("award_points", "award_xp"):
+            result = await boards_col.update_many(
+                {"title": title, field: {"$exists": False}},
+                {"$set": {field: award}},
+            )
+            updated += result.modified_count
+
+    # Other boards have no legacy reward; use the Board model defaults.
+    for field in ("award_points", "award_xp"):
+        result = await boards_col.update_many(
+            {field: {"$exists": False}},
+            {"$set": {field: 0}},
+        )
+        updated += result.modified_count
+
+    logger.info("Added %d missing board reward fields", updated)
+
+
 async def _get_or_create_board(
-    username: str, title: str, order: int, expire_days: int | None = None
+    username: str,
+    title: str,
+    order: int,
+    expire_days: int | None = None,
+    award_points: int = 0,
+    award_xp: int = 0,
 ):
     board = await Board.find_one(Board.username == username, Board.title == title)
     if not board:
@@ -24,12 +56,73 @@ async def _get_or_create_board(
             username=username,
             title=title,
             order=order,
+            task_expire_days=expire_days,
+            award_points=award_points,
+            award_xp=award_xp,
         )
         await board.insert()
         logger.info("Created board '%s' for user %s", title, username)
     return board
 
+
+async def _migrate_user_completed_tasks():
+    users_col = User.get_pymongo_collection()
+    boards_col = Board.get_pymongo_collection()
+    legacy_fields = {
+        old_type: f"complete_{old_type}_tasks"
+        for old_type in OLD_DEFAULT_BOARDS
+    }
+    query = {"$or": [{field: {"$exists": True}} for field in legacy_fields.values()]}
+
+    # Read raw documents: the new User model no longer accepts these fields.
+    async for user in users_col.find(query):
+        for old_type, field in legacy_fields.items():
+            if field not in user:
+                continue
+            count = user[field]
+            if not isinstance(count, int) or isinstance(count, bool) or count < 0:
+                raise ValueError(f"Invalid legacy completed-task counter: {field}")
+            title, order, expire_days = OLD_DEFAULT_BOARDS[old_type]
+            award = baseTasks_points[old_type]
+            board = await _get_or_create_board(
+                user["name"], title, order, expire_days,
+                award_points=award, award_xp=award,
+            )
+            # A retry after interruption must not add the same history twice.
+            # Preserve a board counter if it already contains a larger total.
+            await boards_col.update_one(
+                {"_id": board.id},
+                {"$max": {"completed_tasks": count}},
+            )
+
+        # Delete legacy fields only after all of this user's counters are saved.
+        await users_col.update_one(
+            {"_id": user["_id"]},
+            {"$unset": {field: "" for field in legacy_fields.values()}},
+        )
+
+
+async def _backfill_board_completed_tasks():
+    boards_col = Board.get_pymongo_collection()
+    tasks_col = Task.get_pymongo_collection()
+
+    # Also handles databases already migrated from type to board_id, including
+    # custom boards and users whose legacy counters have already been removed.
+    async for board in boards_col.find({}):
+        count = await tasks_col.count_documents({
+            "board_id": str(board["_id"]),
+            "user": board["username"],
+            "completed": True,
+        })
+        await boards_col.update_one(
+            {"_id": board["_id"]},
+            {"$max": {"completed_tasks": count}},
+        )
+
+
 async def migrate_tasks_to_boards():
+    # Run even when every task already has board_id and no old type remains.
+    await _backfill_board_awards()
     tasks_col = Task.get_pymongo_collection()
 
     # unique tasks (user, old type) if task not migrated
@@ -40,10 +133,6 @@ async def migrate_tasks_to_boards():
 
     pairs = await old_tasks.to_list(length=None)
 
-    # return if no tasks to migrate
-    if not pairs:
-        return
-
     migrated = 0
     for pair in pairs:
         # get user and old type
@@ -52,7 +141,15 @@ async def migrate_tasks_to_boards():
 
         # get title and order
         title, order, expire_days = OLD_DEFAULT_BOARDS.get(old_type, DEFAULT_BOARD)
-        board = await _get_or_create_board(username, title, order, expire_days)
+        award = baseTasks_points.get(old_type, 0)
+        board = await _get_or_create_board(
+            username,
+            title,
+            order,
+            expire_days,
+            award_points=award,
+            award_xp=award,
+        )
 
         # migrate task
         result = await tasks_col.update_many(
@@ -65,3 +162,5 @@ async def migrate_tasks_to_boards():
         migrated += result.modified_count
 
     logger.info("Migrated %d tasks to boards", migrated)
+    await _migrate_user_completed_tasks()
+    await _backfill_board_completed_tasks()

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
+from beanie import PydanticObjectId
 from fastapi.exceptions import HTTPException
 
 from models.models import User
@@ -23,7 +23,7 @@ async def list_items(
 
 @router.put('/buy/item/{id}', dependencies=[Depends(security.access_token_required)])
 async def handler_buy_item(
-    id: str,
+    id: PydanticObjectId,
     user: User = Depends(security.get_current_subject
 )):
     return await buy_item(id, user['name'])
@@ -34,43 +34,21 @@ async def handler_add_item(
     creds: ItemSchema,
     user: User = Depends(security.get_current_subject),
 ):
-    if creds.title == "":
+    title = creds.title.strip()
+    if not title:
         raise HTTPException(
-            status_code=401,
+            status_code=422,
             detail={"message": "Invalid title", "field": "title", "error": "Invalid title"}
         )
 
-    try:
-        data = {
-            "creator": user["name"],
-            "title": creds.title,
-            "type": creds.type,
-            "description": creds.description,
-            "price": float(creds.price),
-            "min_level": int(creds.min_level)
-        }
-
-
-        if creds.min_level == 0:
-            data["min_level"] = 1
-
-    except (ValueError, TypeError):
-        raise HTTPException(
-            status_code=422,
-            detait={"message": "Invalid price or float", "error": "Invalid price or float"}
-        )
-
-    if data["price"] <= 0:
-        raise HTTPException(
-            status_code=401,
-            detail={"message": "Invalid price", "field": "price", "error": "Invalid price"}
-        )
-
-    elif data["min_level"] <= 0:
-        raise HTTPException(
-            status_code=401,
-            detail={"message": "Invalid min_level", "field": "min_level", "error": "Invalid min_level"}
-        )
+    data = {
+        "creator": user["name"],
+        "title": title,
+        "type": creds.type,
+        "description": creds.description,
+        "price": creds.price,
+        "min_level": max(1, creds.min_level),
+    }
 
     # insert item and send notice
     await shop_items_repo.insert_item(data)
@@ -81,16 +59,13 @@ async def handler_add_item(
 
 @router.delete('/delete/item/{id}', dependencies=[Depends(security.access_token_required)])
 async def handler_delete_item(
-    id: str,
+    id: PydanticObjectId,
     user: User = Depends(security.get_current_subject),
 ):
     shop_item = await shop_items_repo.get(id)
 
-    if shop_item.creator != user['name']:
-        raise JSONResponse(
-            status_code=401,
-            content={"message": "Unauthorized name", "error": "Unauthorized name"}
-        )
+    if shop_item is None or shop_item.creator != user['name']:
+        raise HTTPException(status_code=404, detail="Item not found")
 
 
     await shop_item.delete()

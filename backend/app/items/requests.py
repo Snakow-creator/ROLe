@@ -4,6 +4,7 @@ from web_notices import buy_item_notice
 from users.requests import deprive_points_buy_item
 
 from errors.points import NotEnoughSpointsError
+from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from web_notices import error_item_notice
 
@@ -24,10 +25,17 @@ async def buy_item(id, name):
     item = await shop_items_repo.get(id) # get item
     user = await user_repo.get_by_name(name) # get user
 
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    if item is None or item.creator != name:
+        raise HTTPException(status_code=404, detail="Item not found")
+    if user.level < item.min_level:
+        raise HTTPException(status_code=403, detail="Not enough level")
+
     price = item.price * user.sale_shop # calculate price
 
     try:
-        await deprive_points_buy_item(user, price)
+        balance_before = await deprive_points_buy_item(user, price)
     except NotEnoughSpointsError as e:
         return JSONResponse(
                 status_code=402,
@@ -38,10 +46,10 @@ async def buy_item(id, name):
                 },
             )
 
-    notice = buy_item_notice(user, price, item)
+    notice = buy_item_notice(user, price, item, balance_before=balance_before)
 
     # insert buy item in db
-    await items_repo.insert_item(item, name)
+    await items_repo.insert_item(item, name, price=price)
 
     return {
             "message": f"Item {item.title} bought",
