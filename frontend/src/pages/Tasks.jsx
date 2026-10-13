@@ -296,6 +296,24 @@ export default function Tasks() {
 
         ))}
 
+        <button
+          type="button"
+          className="flex h-11 w-[275px] flex-shrink-0 items-center gap-2 rounded-2xl border border-[#B8C2D2] bg-[#E5E7EB]/50 opacity-50 px-4 text-left font-semibold text-[#334155] shadow-sm cursor-pointer transition duration-150 ease-out hover:bg-[#E5E7EB]/80 hover:border-[#9CAAC0] hover:opacity-75 active:bg-[#D8DFEA]/90 active:border-[#8E9DB5] active:opacity-100 active:translate-y-px active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#94A3B8] focus-visible:ring-offset-2 2xl:w-[320px]"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Добавить доску
+        </button>
+
       </div>
   );
 };
