@@ -40,7 +40,7 @@ class TaskRepository(BaseRepository):
                 "board_id": {"$in": board_id},
                 "inactive": False,
                 "completed": False,
-                "date": {"$lt": border}
+                "date": {"$lte": border}
             }
         ).update({"$set": {"inactive": True}})
 

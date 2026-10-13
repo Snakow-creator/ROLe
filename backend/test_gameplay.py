@@ -70,6 +70,8 @@ def quest(**overrides):
 
 
 def setup_quest(monkeypatch, player, task, board, count=1):
+    if not hasattr(board, "task_expire_days"):
+        board.task_expire_days = None
     if not hasattr(board, "completed_tasks"):
         board.completed_tasks = int(task.completed)
     monkeypatch.setattr(task_requests.user_repo, "get_by_name", AsyncMock(return_value=player))

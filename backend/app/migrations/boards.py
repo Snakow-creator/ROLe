@@ -17,6 +17,19 @@ OLD_DEFAULT_BOARDS = {
 DEFAULT_BOARD = ("Прочее", 5, None)
 
 
+async def _backfill_board_expiration():
+    boards_col = Board.get_pymongo_collection()
+    for title, _, expire_days in OLD_DEFAULT_BOARDS.values():
+        if expire_days is None:
+            continue
+        # The first board migration omitted the deadline, including boards
+        # serialized with the model's default None. Preserve configured days.
+        await boards_col.update_many(
+            {"title": title, "task_expire_days": None},
+            {"$set": {"task_expire_days": expire_days}},
+        )
+
+
 async def _backfill_board_awards():
     boards_col = Board.get_pymongo_collection()
     updated = 0
@@ -123,6 +136,7 @@ async def _backfill_board_completed_tasks():
 async def migrate_tasks_to_boards():
     # Run even when every task already has board_id and no old type remains.
     await _backfill_board_awards()
+    await _backfill_board_expiration()
     tasks_col = Task.get_pymongo_collection()
 
     # unique tasks (user, old type) if task not migrated

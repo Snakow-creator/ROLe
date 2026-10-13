@@ -27,7 +27,7 @@ async def main(app: FastAPI):
     # initialize db
     await beanie.init_beanie(
         database=client[collection],
-        document_models=[User, Level, ShopItem, BaseTask, Task, Item, UsersAvatars, Board],
+        document_models=[User, Level, ShopItem, Task, Item, UsersAvatars, Board],
     )
 
     # migrate tasks to boards

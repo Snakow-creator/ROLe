@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from users import weekly_bonus
 from baseTasks.data import task_bonus
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 
 async def complete_task(id, name):
@@ -26,6 +26,9 @@ async def complete_task(id, name):
         task_date = task_date.replace(tzinfo=timezone.utc)
     if task.inactive or task_date is None or task_date > now:
         raise HTTPException(status_code=409, detail="Task is not active")
+    if board.task_expire_days is not None and now >= task_date + timedelta(days=board.task_expire_days):
+        await task.update({"$set": {"inactive": True}})
+        raise HTTPException(status_code=409, detail="Task has expired")
     # find active user tasks by type
     tasks = await task_repo.get_user_tasks_by_board_id(name, task.board_id)
     complete_week = len(tasks) == 1 and board.is_weekly

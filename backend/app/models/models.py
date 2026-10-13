@@ -48,17 +48,6 @@ class UsersAvatars(Document):
         ]
 
 
-class BaseTask(Document):
-    difficulty: Annotated[str, Indexed(unique=True)]
-    points: int = Field(ge=0, description="Поинты за задание")
-    creator: str = Field(min_length=1, description="Пользователь, который создал задание")
-
-    model_config = ConfigDict(extra="forbid")
-
-    class Settings:
-        name = "baseTasks"
-
-
 class Level(Document):
     level: Annotated[int, Indexed(unique=True)]
     xp: int = Field(ge=0, description="Требуемый опыт")
@@ -165,7 +154,7 @@ class Board(Document):
     award_xp: int = Field(default=0, ge=0, description="Опыт канбана")
     completed_tasks: int = Field(default=0, ge=0, description="Количество выполненных квестов")
     is_weekly: bool = Field(default=False, description="Есть ли недельный бонус")
-    task_expire_days: int | None = Field(default=None, description="Дни на выполнение квеста")
+    task_expire_days: int | None = Field(default=None, ge=0, description="Дни на выполнение квеста")
 
     model_config = ConfigDict(extra="forbid")
 

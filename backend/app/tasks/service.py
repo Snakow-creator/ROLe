@@ -5,11 +5,11 @@ from datetime import datetime, timezone, timedelta
 
 class TaskService:
     @staticmethod
-    async def update():
+    async def update(name=None):
         now = datetime.now(timezone.utc)
 
         # get inexpired boards
-        boards = await board_repo.get_expire_boards()
+        boards = await board_repo.get_expire_boards(name)
 
         for board in boards:
             days = board["_id"]

@@ -6,6 +6,7 @@ from models.models import Task, User
 from beanie import PydanticObjectId
 
 from tasks.requests import complete_task, uncomplete_task, delete_task
+from tasks import task_service
 
 from repositories import task_repo, board_repo
 from baseTasks.data import list_baseTasks
@@ -20,6 +21,7 @@ async def tasks(
     user: User = Depends(security.get_current_subject),
 ):
 
+    await task_service.update(user["name"])
     tasks = await task_repo.get_user_tasks(user["name"])
     boards = await board_repo.get_boards(user["name"])
 
@@ -41,6 +43,7 @@ async def edit_complete_task(
     id: PydanticObjectId,
     user: User = Depends(security.get_current_subject),
 ):
+    await task_service.update(user["name"])
     task = await task_repo.get(id)
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")

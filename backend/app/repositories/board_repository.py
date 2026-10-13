@@ -22,12 +22,15 @@ class BoardRepository(BaseRepository):
         # get board by id
         return await self.model.get(ObjectId(board_id))
 
-    async def get_expire_boards(self):
+    async def get_expire_boards(self, name=None):
         # get boards with expire days
+        query = {"task_expire_days": {"$type": "number", "$gte": 0}}
+        if name is not None:
+            query["username"] = name
         return await self.model.aggregate([
-            {"$match": {"expire_days": {"$ne": None}}},
+            {"$match": query},
             {"$group": {
-                "_id": "$expire_days",
+                "_id": "$task_expire_days",
                 "board_id": {"$push": {"$toString": "$_id"}}
             }}
         ]).to_list()
