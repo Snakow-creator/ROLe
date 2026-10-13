@@ -6,7 +6,7 @@ from fastapi import HTTPException
 
 
 from users import weekly_bonus
-from baseTasks.data import task_bonus
+from boards.data import task_bonus
 
 from datetime import datetime, timezone, timedelta
 

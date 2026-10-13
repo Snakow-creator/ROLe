@@ -9,7 +9,6 @@ from tasks.requests import complete_task, uncomplete_task, delete_task
 from tasks import task_service
 
 from repositories import task_repo, board_repo
-from baseTasks.data import list_baseTasks
 from api.core.security import security
 
 

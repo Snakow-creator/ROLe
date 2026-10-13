@@ -1,5 +1,4 @@
 from repositories import user_repo
-from baseTasks.data import list_baseTasks
 from datetime import datetime, timezone
 from pymongo import ReturnDocument
 

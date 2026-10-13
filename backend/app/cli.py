@@ -2,7 +2,6 @@ from models.settings import baseSettings, settings
 from backend.app.base.database import init_db
 
 from levels.load import load_levels
-from baseTasks.load import load_baseTasks
 from items.load import load_items
 
 import asyncclick as click
@@ -21,8 +20,6 @@ async def cli():
 async def load_data():
     """"load const data"""
     click.echo("load_data")
-    await load_baseTasks()
-    click.echo("BaseTasks loaded")
     await load_levels()
     click.echo("Levels loaded")
     await load_items()

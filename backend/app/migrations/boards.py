@@ -1,7 +1,7 @@
 # migrations/boards.py
 import logging
 
-from baseTasks.data import baseTasks_points
+from boards.data import baseBoards_points
 from models.models import Board, Task, User
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ async def _backfill_board_awards():
 
     # Restore the old rewards without overwriting configured board rewards.
     for old_type, (title, _, _) in OLD_DEFAULT_BOARDS.items():
-        award = baseTasks_points[old_type]
+        award = baseBoards_points[old_type]
         for field in ("award_points", "award_xp"):
             result = await boards_col.update_many(
                 {"title": title, field: {"$exists": False}},
@@ -96,7 +96,7 @@ async def _migrate_user_completed_tasks():
             if not isinstance(count, int) or isinstance(count, bool) or count < 0:
                 raise ValueError(f"Invalid legacy completed-task counter: {field}")
             title, order, expire_days = OLD_DEFAULT_BOARDS[old_type]
-            award = baseTasks_points[old_type]
+            award = baseBoards_points[old_type]
             board = await _get_or_create_board(
                 user["name"], title, order, expire_days,
                 award_points=award, award_xp=award,
@@ -155,7 +155,7 @@ async def migrate_tasks_to_boards():
 
         # get title and order
         title, order, expire_days = OLD_DEFAULT_BOARDS.get(old_type, DEFAULT_BOARD)
-        award = baseTasks_points.get(old_type, 0)
+        award = baseBoards_points.get(old_type, 0)
         board = await _get_or_create_board(
             username,
             title,
