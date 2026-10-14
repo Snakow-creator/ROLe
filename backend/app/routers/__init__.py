@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from routers import root
 from api.auth.handler import router as auth_router
 from tasks.handler import router as tasks_router
+from boards.handler import router as boards_router
 from items.handler import router as items_router
 from users.handler import router as users_router
 
@@ -12,5 +13,6 @@ init_router = APIRouter()
 init_router.include_router(root.router)
 init_router.include_router(auth_router)
 init_router.include_router(tasks_router)
+init_router.include_router(boards_router)
 init_router.include_router(items_router)
 init_router.include_router(users_router)

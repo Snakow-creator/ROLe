@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
 import FormCreateTask from "../components/forms/FormCreateTask";
+import FormCreateBoard from "../components/forms/FormCreateBoard";
 import Spinner from "../components/Spinner";
 import { getTasks, completeTask, unCompleteTask, deleteTask } from "../services/apiService/tasks";
 
@@ -15,6 +16,7 @@ import { WeeklyBonusNotification } from "../components/webNotifications/types/We
 import { RevokeWeeklyBonusNotification } from "../components/webNotifications/types/RevokeWeeklyBonusNotification";
 import { CreateTaskNotification } from "../components/webNotifications/types/CreateTaskNotification";
 import { ErrorCreateTaskNotification } from "../components/webNotifications/types/ErrorCreateTaskNotification";
+import { CreateBoardNotification } from "../components/webNotifications/types/CreateBoardNotification";
 
 
 function Task(creds) {
@@ -215,6 +217,7 @@ export default function Tasks() {
 
   const [tasks, setTasks] = useState([]);
   const [boards, setBoards] = useState([]);
+  const [isFormCreateBoard, setIsFormCreateBoard] = useState(false);
 
   const { push } = useNotify();
 
@@ -273,13 +276,21 @@ export default function Tasks() {
     fetchTasks();
   }
 
+  const handleBoardCreated = (board) => {
+    setBoards(current => [...current, board].sort((left, right) =>
+      left.order - right.order || left._id.localeCompare(right._id)
+    ));
+    setIsFormCreateBoard(false);
+    push(new CreateBoardNotification());
+  };
+
   return (
     isLoading
       ? <Spinner />
       : <div className="flex items-start ml-2 mt-4 space-x-3">
         {boards.map(board => (
           <CanbanDesk
-            key={board.title}
+            key={board._id}
             title={board.title}
             board_id={board._id}
             tasks={tasks}
@@ -296,23 +307,31 @@ export default function Tasks() {
 
         ))}
 
-        <button
-          type="button"
-          className="flex h-11 w-[275px] flex-shrink-0 items-center gap-2 rounded-2xl border border-[#B8C2D2] bg-[#E5E7EB]/50 opacity-50 px-4 text-left font-semibold text-[#334155] shadow-sm cursor-pointer transition duration-150 ease-out hover:bg-[#E5E7EB]/80 hover:border-[#9CAAC0] hover:opacity-75 active:bg-[#D8DFEA]/90 active:border-[#8E9DB5] active:opacity-100 active:translate-y-px active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#94A3B8] focus-visible:ring-offset-2 2xl:w-[320px]"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            className="h-5 w-5 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            aria-hidden="true"
+        {isFormCreateBoard ? (
+          <FormCreateBoard
+            onCancel={() => setIsFormCreateBoard(false)}
+            onCreated={handleBoardCreated}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsFormCreateBoard(true)}
+            className="flex h-11 w-[275px] flex-shrink-0 items-center gap-2 rounded-2xl border border-[#B8C2D2] bg-[#E5E7EB]/50 opacity-50 px-4 text-left font-semibold text-[#334155] shadow-sm cursor-pointer transition duration-150 ease-out hover:bg-[#E5E7EB]/80 hover:border-[#9CAAC0] hover:opacity-75 active:bg-[#D8DFEA]/90 active:border-[#8E9DB5] active:opacity-100 active:translate-y-px active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#94A3B8] focus-visible:ring-offset-2 2xl:w-[320px]"
           >
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Добавить доску
-        </button>
+            <svg
+              viewBox="0 0 24 24"
+              className="h-5 w-5 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Добавить доску
+          </button>
+        )}
 
       </div>
   );

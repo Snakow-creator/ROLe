@@ -8,13 +8,24 @@ class BoardRepository(BaseRepository):
     def __init__(self):
         super().__init__(Board)
 
+    async def insert_board(self, creds, name):
+        boards = await self.get_boards(name)
+        order = len(boards)
+        board = self.model(
+            **creds.model_dump(),
+            username=name,
+            order=order,
+        )
+        await board.insert()
+        return board
+
     async def get_boards(self, name):
         # get boards and sort by order
         boards = await self.model.find(
             Board.username == name
         ).to_list()
 
-        boards.sort(key=lambda x: x.order)
+        boards.sort(key=lambda x: (x.order, str(x.id)))
 
         return boards
 

@@ -17,15 +17,23 @@ OLD_DEFAULT_BOARDS = {
 DEFAULT_BOARD = ("Прочее", 5, None)
 
 
+async def _remove_obsolete_board_fields():
+    boards_col = Board.get_pymongo_collection()
+    await boards_col.update_many(
+        {"is_custom": {"$exists": True}},
+        {"$unset": {"is_custom": ""}},
+    )
+
+
 async def _backfill_board_expiration():
     boards_col = Board.get_pymongo_collection()
     for title, _, expire_days in OLD_DEFAULT_BOARDS.values():
         if expire_days is None:
             continue
-        # The first board migration omitted the deadline, including boards
-        # serialized with the model's default None. Preserve configured days.
+        # Only repair missing fields. An explicit None means no expiration,
+        # including user-created boards with a legacy category's title.
         await boards_col.update_many(
-            {"title": title, "task_expire_days": None},
+            {"title": title, "task_expire_days": {"$exists": False}},
             {"$set": {"task_expire_days": expire_days}},
         )
 
@@ -63,7 +71,10 @@ async def _get_or_create_board(
     award_points: int = 0,
     award_xp: int = 0,
 ):
-    board = await Board.find_one(Board.username == username, Board.title == title)
+    board = await Board.find_one(
+        Board.username == username,
+        Board.title == title,
+    )
     if not board:
         board = Board(
             username=username,
@@ -134,6 +145,8 @@ async def _backfill_board_completed_tasks():
 
 
 async def migrate_tasks_to_boards():
+    # Remove the obsolete field before loading documents with extra="forbid".
+    await _remove_obsolete_board_fields()
     # Run even when every task already has board_id and no old type remains.
     await _backfill_board_awards()
     await _backfill_board_expiration()

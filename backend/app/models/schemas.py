@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 from datetime import datetime
 
@@ -19,6 +19,16 @@ class TaskSchema(BaseModel):
     description: str = Field(max_length=255, description="Описание квеста")
     board_id: str = Field(min_length=1, max_length=50, description="ID канбана")
     date: Optional[datetime] = Field(description="Дата запланированного квеста")
+
+
+class BoardCreateSchema(BaseModel):
+    title: str = Field(min_length=1, max_length=100, description="Название доски")
+    award_points: int = Field(default=0, ge=0, strict=True, description="Очки за квест")
+    award_xp: int = Field(default=0, ge=0, strict=True, description="Опыт за квест")
+    is_weekly: bool = Field(default=False, strict=True, description="Есть ли недельный бонус")
+    task_expire_days: int | None = Field(default=None, gt=0, le=36500, strict=True, description="Дни на выполнение квеста")
+
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
 
 class ItemSchema(BaseModel):

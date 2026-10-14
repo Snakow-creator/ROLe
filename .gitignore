@@ -69,6 +69,11 @@ Thumbs.db
 .env.docker
 pyproject.toml
 tests/
+!backend/tests/
+backend/tests/*
+!backend/tests/conftest.py
+!backend/tests/test_board_*.py
+!backend/tests/test_gameplay.py
 
 # Logs
 logs

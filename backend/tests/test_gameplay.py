@@ -1,7 +1,5 @@
 import asyncio
-import sys
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -9,8 +7,6 @@ import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
-
-sys.path.insert(0, str(Path(__file__).parent / "app"))
 
 from api.core.security import security
 from errors.points import NotEnoughSpointsError
