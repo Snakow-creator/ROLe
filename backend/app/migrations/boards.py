@@ -38,6 +38,20 @@ async def _backfill_board_expiration():
         )
 
 
+async def _backfill_board_weekly():
+    boards_col = Board.get_pymongo_collection()
+    hard_title = OLD_DEFAULT_BOARDS["hard"][0]
+    # Restore the legacy weekly bonus without overwriting explicit settings.
+    await boards_col.update_many(
+        {"title": hard_title, "is_weekly": {"$exists": False}},
+        {"$set": {"is_weekly": True}},
+    )
+    await boards_col.update_many(
+        {"is_weekly": {"$exists": False}},
+        {"$set": {"is_weekly": False}},
+    )
+
+
 async def _backfill_board_awards():
     boards_col = Board.get_pymongo_collection()
     updated = 0
@@ -70,6 +84,7 @@ async def _get_or_create_board(
     expire_days: int | None = None,
     award_points: int = 0,
     award_xp: int = 0,
+    is_weekly: bool = False,
 ):
     board = await Board.find_one(
         Board.username == username,
@@ -83,6 +98,7 @@ async def _get_or_create_board(
             task_expire_days=expire_days,
             award_points=award_points,
             award_xp=award_xp,
+            is_weekly=is_weekly,
         )
         await board.insert()
         logger.info("Created board '%s' for user %s", title, username)
@@ -111,6 +127,7 @@ async def _migrate_user_completed_tasks():
             board = await _get_or_create_board(
                 user["name"], title, order, expire_days,
                 award_points=award, award_xp=award,
+                is_weekly=old_type == "hard",
             )
             # A retry after interruption must not add the same history twice.
             # Preserve a board counter if it already contains a larger total.
@@ -150,6 +167,7 @@ async def migrate_tasks_to_boards():
     # Run even when every task already has board_id and no old type remains.
     await _backfill_board_awards()
     await _backfill_board_expiration()
+    await _backfill_board_weekly()
     tasks_col = Task.get_pymongo_collection()
 
     # unique tasks (user, old type) if task not migrated
@@ -176,6 +194,7 @@ async def migrate_tasks_to_boards():
             expire_days,
             award_points=award,
             award_xp=award,
+            is_weekly=old_type == "hard",
         )
 
         # migrate task

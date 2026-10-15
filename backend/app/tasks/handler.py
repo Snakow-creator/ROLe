@@ -32,6 +32,12 @@ async def add_task(
     creds: TaskSchema,
     user: User = Depends(security.get_current_subject),
 ):
+    if not PydanticObjectId.is_valid(creds.board_id):
+        raise HTTPException(status_code=422, detail="Invalid board ID")
+    board = await board_repo.get(creds.board_id)
+    if board is None or board.username != user["name"]:
+        raise HTTPException(status_code=404, detail="Board not found")
+    creds = creds.model_copy(update={"board_id": str(board.id)})
     await task_repo.insert_task(creds, user["name"])
 
     return {"message": "Task added"}

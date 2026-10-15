@@ -1,66 +1,24 @@
-import api from "./api";
+import api from './api';
 
-
-export const getTasks = async (creds) => {
-  try {
-    const res = await api.get("/tasks");
-    creds.onFinish(res.data);
-
-
-    return res
-  } catch (error) {
-    console.error(error);
-  }
+export async function getTasks() {
+  return api.get('/tasks');
 }
 
-
-// add catch error task
 export async function addTask(formData) {
-  try {
-    const res = await api.post("/add/task", formData);
-    return res
-
-  } catch (error) {
-    console.error(error);
-    return error
-  }
-};
-
-
-export async function completeTask(creds) {
-  try {
-    const res = await api.put(`/complete/task/${creds.id}`, {});
-    // creds.onCompleteTask(res) уведомления
-
-    return res.data
-  } catch (error) {
-    console.error(error);
-    // creds.onError(error) уведомления
-  }
+  return api.post('/add/task', formData);
 }
 
-
-export async function unCompleteTask(creds) {
-  try {
-    const res = await api.put(`/uncomplete/task/${creds.id}`, {});
-    // creds.onUncompleteTask(res) уведомления
-
-    return res.data
-  } catch (error) {
-    console.error(error);
-    // creds.onError(error) уведомления
-  }
+export async function completeTask({ id }) {
+  const res = await api.put(`/complete/task/${id}`, {});
+  return res.data;
 }
 
+export async function unCompleteTask({ id }) {
+  const res = await api.put(`/uncomplete/task/${id}`, {});
+  return res.data;
+}
 
-export async function deleteTask(creds) {
-  try {
-    const res = await api.delete(`/delete/task/${creds.id}`);
-    // creds.onDeleteTask(res.data.title); уведомления
-
-    return res.data
-  } catch (error) {
-    console.error(error);
-    // creds.onError(error) уведомления
-  }
+export async function deleteTask({ id }) {
+  const res = await api.delete(`/delete/task/${id}`);
+  return res.data;
 }

@@ -29,6 +29,15 @@ class Collection:
     def find(self, query):
         return Cursor(self.raw.find(query))
 
+    async def find_one(self, query):
+        return self.raw.find_one(query)
+
+    async def delete_many(self, query):
+        return self.raw.delete_many(query)
+
+    async def delete_one(self, query):
+        return self.raw.delete_one(query)
+
     async def aggregate(self, pipeline):
         return Cursor(self.raw.aggregate(pipeline))
 

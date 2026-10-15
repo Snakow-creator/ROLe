@@ -4,9 +4,13 @@ import Button from "../Button"
 import { addTask } from "../../services/apiService/tasks"
 
 import { useRef, useState } from "react"
+import { useNotify } from '../../context/NotificationContext';
+import { ErrorTaskNotification } from '../webNotifications/types/ErrorTaskNotification';
+import { isSessionExpiredError } from '../../services/apiService/requestErrors';
 
 
 export default function FormCreateTask(creds) {
+  const { push } = useNotify();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const [formData, setFormData] = useState({
@@ -36,17 +40,13 @@ export default function FormCreateTask(creds) {
     submittingRef.current = true;
     setIsSubmitting(true);
     try {
-      const res = await addTask({ ...formData, title });
-      if (!res || res.status < 200 || res.status >= 300 || !res.status) {
-        creds.onNoticeErrorCreateTask("Не удалось создать квест. Попробуйте ещё раз.");
-        return;
-      }
+      await addTask({ ...formData, title });
 
       creds.onNoticeCreateTask();
       creds.onClickCancelButton();
       creds.onUpdate();
-    } catch {
-      creds.onNoticeErrorCreateTask("Не удалось создать квест. Попробуйте ещё раз.");
+    } catch (error) {
+      if (!isSessionExpiredError(error)) push(new ErrorTaskNotification('create', error));
     } finally {
       submittingRef.current = false;
       setIsSubmitting(false);

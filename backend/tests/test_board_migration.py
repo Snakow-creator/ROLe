@@ -26,8 +26,9 @@ async def test_old_database_transfers_all_user_categories_without_losing_history
         title, _, expiry = migration.OLD_DEFAULT_BOARDS[category]
         board = db.boards.find_one({"username": "alice", "title": title})
         assert board["completed_tasks"] == count
-        assert board["award_points"] == board["award_xp"] == migration.baseTasks_points[category]
+        assert board["award_points"] == board["award_xp"] == migration.baseBoards_points[category]
         assert board["task_expire_days"] == expiry
+        assert board["is_weekly"] is (category == "hard")
     assert db.tasks.count_documents({"type": {"$exists": True}}) == 0
     migrated_user = db.users.find_one({"name": "alice"})
     assert not any(field.startswith("complete_") for field in migrated_user)
@@ -83,6 +84,60 @@ async def test_old_tasks_without_user_counters_are_counted_after_conversion(data
     await migration.migrate_tasks_to_boards()
     board = db.boards.find_one({"username": "alice", "title": "Трудные"})
     assert board["completed_tasks"] == 1
+    assert board["is_weekly"] is True
+
+
+@pytest.mark.asyncio
+async def test_existing_hard_board_missing_weekly_setting_is_backfilled(database):
+    db, _ = database
+    board_id = db.boards.insert_one({
+        "username": "alice", "title": "Трудные", "order": 2,
+        "award_points": 200, "award_xp": 200, "task_expire_days": 7,
+    }).inserted_id
+    db.tasks.insert_one({"user": "alice", "board_id": str(board_id), "completed": False})
+
+    await migration.migrate_tasks_to_boards()
+
+    assert db.boards.find_one({"_id": board_id})["is_weekly"] is True
+    before = snapshot(db)
+    await migration.migrate_tasks_to_boards()
+    assert snapshot(db) == before
+
+
+@pytest.mark.asyncio
+async def test_other_boards_keep_weekly_settings_and_default_to_false(database):
+    db, _ = database
+    db.boards.insert_many([
+        {"username": "alice", "title": "Простые"},
+        {"username": "alice", "title": "Обычные", "is_weekly": False},
+        {"username": "alice", "title": "Своя недельная", "is_weekly": True},
+    ])
+
+    await migration.migrate_tasks_to_boards()
+
+    assert db.boards.find_one({"title": "Простые"})["is_weekly"] is False
+    assert db.boards.find_one({"title": "Обычные"})["is_weekly"] is False
+    assert db.boards.find_one({"title": "Своя недельная"})["is_weekly"] is True
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("is_weekly", [False, True])
+async def test_existing_hard_board_preserves_explicit_weekly_setting(database, is_weekly):
+    db, _ = database
+    board_id = db.boards.insert_one({
+        "username": "alice", "title": "Трудные", "is_weekly": is_weekly,
+        "award_points": 3, "award_xp": 4, "task_expire_days": None,
+    }).inserted_id
+    db.tasks.insert_one({"user": "alice", "type": "hard", "completed": False})
+
+    await migration.migrate_tasks_to_boards()
+    await migration.migrate_tasks_to_boards()
+
+    board = db.boards.find_one({"_id": board_id})
+    assert board["is_weekly"] is is_weekly
+    assert (board["award_points"], board["award_xp"]) == (3, 4)
+    assert board["task_expire_days"] is None
+    assert db.boards.count_documents({}) == 1
 
 
 @pytest.mark.asyncio

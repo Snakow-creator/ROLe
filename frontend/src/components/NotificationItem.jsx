@@ -32,6 +32,7 @@ export function NotificationItem ({ notification, onRemove, isError }) {
 
   return (
     <div
+      role={isError ? 'alert' : 'status'}
       className="relative w-full flex-col items-start rounded-xl bg-white border border-[#E5E5E5] shadow p-4 pb-6 overflow-hidden"
       style={{ animation: isLeaving
         ? `notification-exit ${exitDuration}ms ease-in-out forwards`
