@@ -3,14 +3,20 @@ import Button from "../Button"
 
 import { addTask } from "../../services/apiService/tasks"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
+import { useNotify } from '../../context/NotificationContext';
+import { ErrorTaskNotification } from '../webNotifications/types/ErrorTaskNotification';
+import { isSessionExpiredError } from '../../services/apiService/requestErrors';
 
 
 export default function FormCreateTask(creds) {
+  const { push } = useNotify();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    type: creds.type,
+    board_id: creds.board_id,
     date: new Date().toISOString().split('T')[0],
   })
 
@@ -21,17 +27,51 @@ export default function FormCreateTask(creds) {
     }))
   }
 
+  const submitTask = async (showEmptyTitleError) => {
+    const title = formData.title.trim();
+    if (!title) {
+      if (showEmptyTitleError) {
+        creds.onNoticeErrorCreateTask("Введите название квеста");
+      }
+      return;
+    }
+    if (submittingRef.current) return;
+
+    submittingRef.current = true;
+    setIsSubmitting(true);
+    try {
+      await addTask({ ...formData, title });
+
+      creds.onNoticeCreateTask();
+      creds.onClickCancelButton();
+      creds.onUpdate();
+    } catch (error) {
+      if (!isSessionExpiredError(error)) push(new ErrorTaskNotification('create', error));
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
+    }
+  }
+
   const onSubmit = async (e) => {
     e.preventDefault();
-    const res = await addTask(formData);
+    await submitTask(true);
+  }
 
-    creds.onNoticeCreateTask()
-    creds.onClickCancelButton();
-    creds.onUpdate();
+  const onKeyDown = async (e) => {
+    if (
+      e.target.tagName !== "TEXTAREA" ||
+      e.key !== "Enter" ||
+      e.shiftKey ||
+      e.nativeEvent.isComposing
+    ) return;
+
+    e.preventDefault();
+    if (!e.repeat) await submitTask(false);
   }
 
   return (
-    <form onSubmit={onSubmit}
+    <form onSubmit={onSubmit} onKeyDown={onKeyDown}
       className="mt-2">
 
       <Textarea
@@ -57,8 +97,9 @@ export default function FormCreateTask(creds) {
         {/* create task */}
         <Button
           type="submit"
+          disabled={isSubmitting}
           className="ml-2 mt-0 text-sm p-1 px-2">
-          Добавить
+          {isSubmitting ? "Добавляем…" : "Добавить"}
         </Button>
 
         {/* cancel */}

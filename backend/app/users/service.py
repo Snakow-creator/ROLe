@@ -24,11 +24,6 @@ class UserService:
             "sale_shop": user.sale_shop,
             "last_streak": user.last_streak.timestamp(),
             "last_mul": user.last_mul.timestamp(),
-            "complete_simple_tasks": user.complete_simple_tasks,
-            "complete_common_tasks": user.complete_common_tasks,
-            "complete_hard_tasks": user.complete_hard_tasks,
-            "complete_expert_tasks": user.complete_expert_tasks,
-            "complete_hardcore_tasks": user.complete_hardcore_tasks,
         }
 
         return data
@@ -64,7 +59,7 @@ class WeeklyBonusService:
     @staticmethod
     async def revoke(user: User):
         await user.update({
-            "$inc": {"Spoints": 150, "xp": 150},
+            "$inc": {"Spoints": -150, "xp": -150},
             "$set": {
                 "last_mul": user.penult_last_mul,
                 "mul": user.penult_mul,
@@ -78,7 +73,7 @@ class WeeklyBonusService:
         return web_notice(
             title="Ваш бонус недели снят",
             message=f"Ваш множитель опыта теперь снова {mul}%, а скидка магазина {sale_shop}%, а Xp и Spoints вернулись к прежнему уровню",
-            task="revoke_weekly_bonus",
+            type="revoke_weekly_bonus",
         )
 
 async def delete_task(task):

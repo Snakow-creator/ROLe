@@ -1,5 +1,6 @@
 from repositories import user_repo
 from datetime import datetime, timezone
+from pymongo import ReturnDocument
 
 from errors.points import NotEnoughSpointsError
 
@@ -37,28 +38,28 @@ async def edit_level(name, level):
     return {"message": "Success", "points": abs(points)}
 
 
-async def edit_points(user, points, type, o=1):
+async def edit_points(user, points, xp, o=1):
     # update user points, xp and complete tasks
     # user - object User
-    # type - type of task
     # o - operation + or -, add or deprive
 
-    await user.update(
-        {"$inc": {
-            "Spoints": o * points,
-            "xp": o * points,
-            f"complete_{type}_tasks": o,
-        }}
-    )
+    increments = {"Spoints": o * points, "xp": o * xp}
+    await user.update({"$inc": increments})
 
 async def deprive_points_buy_item(user, points):
     # deprive user points by buy item
     # if points doesn't enough raise
 
-    if user.Spoints < points:
+    collection = user_repo.model.get_pymongo_collection()
+    previous = await collection.find_one_and_update(
+        {"_id": user.id, "Spoints": {"$gte": points}},
+        {"$inc": {"Spoints": -points}},
+        return_document=ReturnDocument.BEFORE,
+    )
+    if previous is None:
         raise NotEnoughSpointsError
-
-    await user.update({"$inc": {"Spoints": points * -1}})
+    user.Spoints = previous["Spoints"] - points
+    return previous["Spoints"]
 
 
 async def up_streak(user):

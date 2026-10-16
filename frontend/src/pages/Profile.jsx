@@ -43,11 +43,11 @@ export default function Profile() {
                 <Attribute title="Серия дней:">{data.days_streak}</Attribute>
                 <Attribute title="Множитель опыта:">{data.mul}</Attribute>
                 <Attribute title="Процент скидки:">{data.sale_shop}</Attribute>
-                <Attribute title="Выполненные простые задания:">{data.complete_simple_tasks}</Attribute>
-                <Attribute title="Выполненные обычные задания:">{data.complete_common_tasks}</Attribute>
-                <Attribute title="Выполненные трудные задания:">{data.complete_hard_tasks}</Attribute>
-                <Attribute title="Выполненные сложные задания:">{data.complete_expert_tasks}</Attribute>
-                <Attribute title="Выполненные хардкорные задания:">{data.complete_hardcore_tasks}</Attribute>
+                {data.boards?.map(board => (
+                  <Attribute key={board._id} title={`Выполненные квесты (${board.title}):`}>
+                    {board.completed_tasks}
+                  </Attribute>
+                ))}
               </div>
             </div>
           )}

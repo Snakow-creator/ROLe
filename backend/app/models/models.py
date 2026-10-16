@@ -1,6 +1,6 @@
 from pydantic import Field, ConfigDict
 from beanie import Document, Indexed
-from pymongo import IndexModel
+from pymongo import IndexModel, ASCENDING
 from typing import Annotated, Optional
 
 from datetime import datetime, timezone
@@ -25,13 +25,6 @@ class User(Document):
     penult_mul: float = Field(default=1, ge=0)
     penult_sale_shop: float = Field(default=1, ge=0)
     penult_last_mul: datetime = datetime.now(timezone.utc)
-    # завершенные задания
-    complete_simple_tasks: int = Field(default=0, ge=0)
-    complete_common_tasks: int = Field(default=0, ge=0)
-    complete_hard_tasks: int = Field(default=0, ge=0)
-    complete_expert_tasks: int = Field(default=0, ge=0)
-    complete_hardcore_tasks: int = Field(default=0, ge=0)
-
     model_config = ConfigDict(extra="forbid")
 
     class Settings:
@@ -55,17 +48,6 @@ class UsersAvatars(Document):
         ]
 
 
-class BaseTask(Document):
-    difficulty: Annotated[str, Indexed(unique=True)]
-    points: int = Field(ge=0, description="Поинты за задание")
-    creator: str = Field(min_length=1, description="Пользователь, который создал задание")
-
-    model_config = ConfigDict(extra="forbid")
-
-    class Settings:
-        name = "baseTasks"
-
-
 class Level(Document):
     level: Annotated[int, Indexed(unique=True)]
     xp: int = Field(ge=0, description="Требуемый опыт")
@@ -78,10 +60,10 @@ class Level(Document):
 class ShopItem(Document):
     title: str = Field(max_length=100, description="Название товара")
     description: str = Field(max_length=255, description="Описание товара")
-    price: int = Field(gt=0, description="Цена товара")
+    price: float = Field(gt=0, allow_inf_nan=False, description="Цена товара")
     creator: str = Field(min_length=1, description="Пользователь, который создал товар")
     type: str = Field(min_length=1, max_length=20,description="Тип товара")
-    min_level: int = Field(gte=0, description="Минимальный уровень для покупки")
+    min_level: int = Field(ge=0, description="Минимальный уровень для покупки")
 
     model_config = ConfigDict(extra="forbid")
 
@@ -92,7 +74,7 @@ class ShopItem(Document):
 class Item(Document):
     title: str = Field(max_length=100, description="Название товара")
     description: str = Field(max_length=255, description="Описание товара")
-    price: int = Field(gt=0, description="Цена товара")
+    price: float = Field(ge=0, allow_inf_nan=False, description="Цена товара")
     name: str = Field(description="Пользователь, который купил товар")
     date: Optional[datetime] = datetime.now(timezone.utc)
 
@@ -102,11 +84,14 @@ class Item(Document):
         name = "items"
 
 
+# old tasks data:
+# type - type of board
+# change type -> board_id
 class Task(Document):
     # основные данные
     title: str = Field(min_length=1, max_length=100, description="Название квеста")
     description: str = Field(max_length=255, description="Описание квеста")
-    type: str = Field(description="Тип квеста")
+    board_id: str = Field(min_length=1, max_length=50, description="ID канбана")
     user: str = Field(description="Пользователь, который зарегистрировал квест")
     # дата создания и завершения
     date: Optional[datetime] = datetime.now(timezone.utc).replace(
@@ -122,21 +107,23 @@ class Task(Document):
     is_weekly_bonus: bool = Field(default=False, description="Недельный бонус")
     # сколько начислено поинтов за задание(если было выполнено)
     awarded_points: float = Field(default=0, ge=0, description="Поинты за квест")
+    awarded_xp: float | None = Field(default=None, ge=0, description="Начисленный опыт за квест")
 
     model_config = ConfigDict(extra="forbid")
 
     class Settings:
         name = "tasks"
+        indexes = [IndexModel([("user", ASCENDING), ("board_id", ASCENDING), ("position", ASCENDING)])]
 
 
 class Notice(Document):
-    id_name: str = Field(min_length=1, max_length=50, description="ID пользователя")
+    name: str = Field(min_length=1, max_length=50, description="ID пользователя")
     id: int = Field(gt=0, description="ID уведомления", unique=True)
     message: str = Field(min_length=1, max_length=255, description="Текст уведомления")
     hidden: bool = Field(default=False, description="Скрыть уведомление")
     if_bonus: bool = Field(default=False, description="Бонус")
     id_bonus: str = Field(default=None, description="ID бонуса")
-    
+
     date: Optional[datetime] = datetime.now(timezone.utc)
 
 
@@ -156,3 +143,23 @@ class Avatar_Item(Document):
 
     class Settings:
         name = "avatar_items"
+
+
+class Board(Document):
+    username: str = Field(min_length=1, max_length=20, description="Имя пользователя")
+    title: str = Field(min_length=1, max_length=100, description="Название канбана")
+    order: int = Field(default=0, description="Порядок отображения")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    award_points: int = Field(default=0, ge=0, description="Поинты канбана")
+    award_xp: int = Field(default=0, ge=0, description="Опыт канбана")
+    completed_tasks: int = Field(default=0, ge=0, description="Количество выполненных квестов")
+    is_weekly: bool = Field(default=False, description="Есть ли недельный бонус")
+    task_expire_days: int | None = Field(default=None, ge=0, description="Дни на выполнение квеста")
+
+    model_config = ConfigDict(extra="forbid")
+
+    class Settings:
+        name = "boards"
+        indexes = [
+            IndexModel([("username", ASCENDING), ("order", ASCENDING)]),
+        ]

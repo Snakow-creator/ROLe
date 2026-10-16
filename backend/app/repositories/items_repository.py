@@ -6,12 +6,12 @@ class ItemsRepository(BaseRepository):
     def __init__(self):
         super().__init__(Item)
 
-    async def insert_item(self, base_item, name):
+    async def insert_item(self, base_item, name, price=None):
         # save data item to mongodb
         item = self.model(
             title=base_item.title,
             description=base_item.description,
-            price=base_item.price,
+            price=base_item.price if price is None else price,
             name=name,
         )
 

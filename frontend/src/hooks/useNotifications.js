@@ -9,8 +9,15 @@ export function useNotifications() {
   }, [])
 
   const push = useCallback((notificationInstance) => {
-    setNotifications((prev) => [...prev, notificationInstance])
+    setNotifications((prev) => {
+      if (notificationInstance.dedupeKey && prev.some(n => n.dedupeKey === notificationInstance.dedupeKey)) return prev;
+      return [...prev, notificationInstance];
+    })
   }, [])
 
-  return { notifications, push, remove }
+  const removeByKey = useCallback((dedupeKey) => {
+    setNotifications(prev => prev.filter(n => n.dedupeKey !== dedupeKey));
+  }, []);
+
+  return { notifications, push, remove, removeByKey }
 }

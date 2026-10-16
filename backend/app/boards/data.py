@@ -1,8 +1,8 @@
-list_baseTasks = ["simple", "common", "hard", "expert", "hardcore"]
+list_baseBoards = ["simple", "common", "hard", "expert", "hardcore"]
 
 task_bonus = 1.5  # + 50% of points
 
-baseTasks_points = {
+baseBoards_points = {
     "simple": 20,
     "common": 50,
     "hard": 200,
@@ -10,7 +10,7 @@ baseTasks_points = {
     "hardcore": 5000,
 }
 
-baseTasks_data = (
+baseBoards_data = (
     {
         "difficulty": "simple",
         "points": 20,
@@ -32,3 +32,13 @@ baseTasks_data = (
         "points": 5000,
     },
 )
+
+# title -> (type, order, expire_days)
+OLD_DEFAULT_BOARDS = {
+  "Простые": ("simple", 0, 1),
+  "Обычные": ("common", 1, 1),
+  "Трудные": ("hard", 2, 7),
+  "Сложные": ("expert", 3, 30),
+  "Хардкорные": ("hardcore", 4, None),
+}
+

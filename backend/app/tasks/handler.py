@@ -3,11 +3,12 @@ from datetime import datetime, timezone
 
 from models.schemas import TaskSchema
 from models.models import Task, User
+from beanie import PydanticObjectId
 
 from tasks.requests import complete_task, uncomplete_task, delete_task
+from tasks import task_service
 
-from repositories import task_repo, base_tasks_repo
-from baseTasks.data import list_baseTasks
+from repositories import task_repo, board_repo
 from api.core.security import security
 
 
@@ -19,10 +20,11 @@ async def tasks(
     user: User = Depends(security.get_current_subject),
 ):
 
+    await task_service.update(user["name"])
     tasks = await task_repo.get_user_tasks(user["name"])
-    type_tasks = await base_tasks_repo.get_base_tasks(user['name'])
+    boards = await board_repo.get_boards(user["name"])
 
-    return {"message": "Success", "tasks": tasks, "type_tasks": type_tasks}
+    return {"message": "Success", "tasks": tasks, "boards": boards}
 
 
 @router.post("/add/task", dependencies=[Depends(security.access_token_required)])
@@ -30,9 +32,12 @@ async def add_task(
     creds: TaskSchema,
     user: User = Depends(security.get_current_subject),
 ):
-    if creds.type not in list_baseTasks:
-        raise HTTPException(status_code=400, detail="Invalid task type")
-
+    if not PydanticObjectId.is_valid(creds.board_id):
+        raise HTTPException(status_code=422, detail="Invalid board ID")
+    board = await board_repo.get(creds.board_id)
+    if board is None or board.username != user["name"]:
+        raise HTTPException(status_code=404, detail="Board not found")
+    creds = creds.model_copy(update={"board_id": str(board.id)})
     await task_repo.insert_task(creds, user["name"])
 
     return {"message": "Task added"}
@@ -40,10 +45,13 @@ async def add_task(
 
 @router.put("/complete/task/{id}", dependencies=[Depends(security.access_token_required)])
 async def edit_complete_task(
-    id: str,
+    id: PydanticObjectId,
     user: User = Depends(security.get_current_subject),
 ):
+    await task_service.update(user["name"])
     task = await task_repo.get(id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
 
     if task.user != user["name"]:
         raise HTTPException(status_code=401, detail="Unauthorized, this task is not your")
@@ -54,10 +62,12 @@ async def edit_complete_task(
 
 @router.put("/uncomplete/task/{id}", dependencies=[Depends(security.access_token_required)])
 async def edit_uncomplete_task(
-    id: str,
+    id: PydanticObjectId,
     user: User = Depends(security.get_current_subject),
 ):
     task = await task_repo.get(id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
     if task.user != user["name"]:
         raise HTTPException(status_code=401, detail="Unauthorized, this task is not your")
 
@@ -67,10 +77,12 @@ async def edit_uncomplete_task(
 
 @router.delete("/delete/task/{id}", dependencies=[Depends(security.access_token_required)])
 async def edit_delete_task(
-    id: str,
+    id: PydanticObjectId,
     user: User = Depends(security.get_current_subject),
 ):
     task = await task_repo.get(id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
     if task.user != user["name"]:
         raise HTTPException(status_code=401, detail="Unauthorized, this task is not your")
 
