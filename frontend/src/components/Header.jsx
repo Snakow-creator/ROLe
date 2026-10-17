@@ -24,9 +24,10 @@ export default function Header() {
     // if auth is true
     setNavigation(auth &&
       // navigation, near right with logo
-      <nav className="flex items-center space-x-8">
-        <LinkHeader to="/quests">мои квесты</LinkHeader>
-        <LinkHeader to="/items">магазин</LinkHeader>
+      <nav aria-label="Основная навигация" className="flex min-w-0 items-center gap-1 overflow-x-auto sm:gap-4 lg:gap-8">
+        <LinkHeader to="/quests" className="shrink-0 whitespace-nowrap text-xs sm:text-sm lg:text-lg">мои квесты</LinkHeader>
+        <LinkHeader to="/plan" className="shrink-0 whitespace-nowrap text-xs sm:text-sm lg:text-lg">план недели</LinkHeader>
+        <LinkHeader to="/items" className="shrink-0 whitespace-nowrap text-xs sm:text-sm lg:text-lg">магазин</LinkHeader>
       </nav>
     )
   }
@@ -78,16 +79,16 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 left-0 w-full bg-[#FAFBFF] z-50">
-      <div className="flex items-center justify-between py-2 ml-4">
+      <div className="flex items-center justify-between gap-3 px-3 py-2 md:px-4">
         {/* logo */}
-        <div className="flex items-center space-x-8">
-          <Link to="/">
-            <h1 className="font-acme text-3xl">Realms of Life</h1>
+        <div className="flex min-w-0 items-center gap-3 sm:gap-8">
+          <Link to="/" className="shrink-0">
+            <h1 className="font-acme text-2xl md:text-3xl"><span className="sm:hidden">ROLe</span><span className="hidden sm:inline">Realms of Life</span></h1>
           </Link>
           { navigation }
         </div>
 
-        <div className="flex items-center space-x-8 mr-8">
+        <div className="flex shrink-0 items-center gap-3 sm:gap-8">
           { bar }
         </div>
       </div>

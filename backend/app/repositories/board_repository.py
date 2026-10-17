@@ -1,7 +1,7 @@
 from beanie import PydanticObjectId as ObjectId
 
 from base.config import BaseRepository
-from models.models import Board, Task
+from models.models import Board, PlanEntry, PlanTemplate, Task
 
 
 class BoardRepository(BaseRepository):
@@ -25,6 +25,22 @@ class BoardRepository(BaseRepository):
         board = await boards.find_one(query)
         if board is None:
             return None
+
+        # Preserve plan history before the board's quest documents are removed.
+        linked = await Task.get_pymongo_collection().find({
+            "board_id": str(board_id), "user": name, "plan_entry_id": {"$type": "string"},
+        }).to_list(length=None)
+        for task in linked:
+            await PlanEntry.get_pymongo_collection().update_one(
+                {"_id": ObjectId(task["plan_entry_id"]), "user": name},
+                {"$set": {"board_id": None, "completed": task.get("completed", False), "complete_date": task.get("complete_date")}},
+            )
+        await PlanTemplate.get_pymongo_collection().update_many(
+            {"user": name, "board_id": str(board_id)}, {"$set": {"board_id": None}},
+        )
+        await PlanEntry.get_pymongo_collection().update_many(
+            {"user": name, "board_id": str(board_id)}, {"$set": {"board_id": None}},
+        )
 
         # Keep the board available for retry if task cleanup fails. The default
         # standalone MongoDB installation does not support transactions.

@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Tasks from './pages/Tasks';
 import Items from './pages/Items';
+import Plan from './pages/Plan';
 
 import { NotificationProvider } from './context/NotificationContext';
 
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/quests" element={<Tasks />} />
+            <Route path="/plan" element={<Plan />} />
             <Route path="/items" element={<Items />} />
           </Routes>
         </main>

@@ -1,7 +1,7 @@
 import mongomock
 import pytest
 
-from models.models import Board, Task, User
+from models.models import Board, PlanEntry, PlanTemplate, Task, User
 
 
 class Cursor:
@@ -41,14 +41,17 @@ class Collection:
     async def aggregate(self, pipeline):
         return Cursor(self.raw.aggregate(pipeline))
 
-    async def update_many(self, query, update):
-        return self.raw.update_many(query, update)
+    async def insert_one(self, document):
+        return self.raw.insert_one(document)
 
-    async def update_one(self, query, update):
+    async def update_many(self, query, update, **kwargs):
+        return self.raw.update_many(query, update, **kwargs)
+
+    async def update_one(self, query, update, **kwargs):
         if self.fail_cleanup_once and "$unset" in update:
             self.fail_cleanup_once = False
             raise RuntimeError("Simulated interruption before user cleanup")
-        return self.raw.update_one(query, update)
+        return self.raw.update_one(query, update, **kwargs)
 
     async def count_documents(self, query):
         return self.raw.count_documents(query)
@@ -65,8 +68,9 @@ class Field:
 @pytest.fixture
 def database(monkeypatch):
     db = mongomock.MongoClient().role_migration_test
-    collections = {name: Collection(db[name]) for name in ("boards", "tasks", "users")}
-    for model, name in [(Board, "boards"), (Task, "tasks"), (User, "users")]:
+    models = [(Board, "boards"), (Task, "tasks"), (User, "users"), (PlanTemplate, "plan_templates"), (PlanEntry, "plan_entries")]
+    collections = {name: Collection(db[name]) for _, name in models}
+    for model, name in models:
         collection = collections[name]
         monkeypatch.setattr(model, "get_pymongo_collection", classmethod(lambda cls, c=collection: c))
     monkeypatch.setattr(Board, "username", Field("username"), raising=False)

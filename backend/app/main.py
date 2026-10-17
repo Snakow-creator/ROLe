@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from models.models import *
 from models.settings import settings, baseSettings
 from tasks import task_service
+from tasks.scheduler import task_update_scheduler
 
 from users.requests import users_days_and_last_mul_expired
 from api.core.security import load_security_handle_errors
@@ -23,34 +24,28 @@ logging.basicConfig(level=logging.INFO)
 @asynccontextmanager
 async def main(app: FastAPI):
     client = AsyncMongoClient(settings.mongo_url)
-    collection = settings.collection_name
-    # initialize db
-    await beanie.init_beanie(
-        database=client[collection],
-        document_models=[User, Level, ShopItem, Task, Item, UsersAvatars, Board],
-    )
+    try:
+        collection = settings.collection_name
+        await beanie.init_beanie(
+            database=client[collection],
+            document_models=[User, Level, ShopItem, Task, Item, UsersAvatars, Board, PlanEntry, PlanTemplate],
+        )
 
-    # migrate tasks to boards
-    await migrate_tasks_to_boards()
+        await migrate_tasks_to_boards()
+        await task_service.update()
+        await users_days_and_last_mul_expired()
+        load_security_handle_errors(app)
 
-    # expire tasks and users data
-    await task_service.update() # expire tasks
-    await users_days_and_last_mul_expired()
+        if collection == baseSettings.test_collection_name:
+            await load_data()
 
-    # init handle errors
-    load_security_handle_errors(app)
-
-    logging.info("ROLe is starting...")
-
-
-    if collection == baseSettings.test_collection_name:
-        await load_data()
-
-    yield
-    # end
-    # if collection == baseSettings.test_collection_name:
-    #     await drop_tests_collection()
-    logging.info("ROLe is closing...")
+        async with task_update_scheduler():
+            logging.info("ROLe is starting...")
+            yield
+    finally:
+        # The scheduler exits before its database connection is closed.
+        await client.close()
+        logging.info("ROLe is closing...")
 
 
 origins = [

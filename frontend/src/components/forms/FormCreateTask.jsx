@@ -17,7 +17,6 @@ export default function FormCreateTask(creds) {
     title: "",
     description: "",
     board_id: creds.board_id,
-    date: new Date().toISOString().split('T')[0],
   })
 
   const handleChange = (e) => {
@@ -39,17 +38,19 @@ export default function FormCreateTask(creds) {
 
     submittingRef.current = true;
     setIsSubmitting(true);
+    creds.onMutationStart();
     try {
       await addTask({ ...formData, title });
 
       creds.onNoticeCreateTask();
       creds.onClickCancelButton();
-      creds.onUpdate();
+      await creds.onUpdate();
     } catch (error) {
       if (!isSessionExpiredError(error)) push(new ErrorTaskNotification('create', error));
     } finally {
       submittingRef.current = false;
       setIsSubmitting(false);
+      creds.onMutationEnd();
     }
   }
 

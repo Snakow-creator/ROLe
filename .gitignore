@@ -74,6 +74,8 @@ backend/tests/*
 !backend/tests/conftest.py
 !backend/tests/test_board_*.py
 !backend/tests/test_gameplay.py
+!backend/tests/test_task_*.py
+!backend/tests/test_plan*.py
 
 # Logs
 logs
