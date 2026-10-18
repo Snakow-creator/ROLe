@@ -1,25 +1,30 @@
 from base.config import BaseRepository
 from models.models import Item
+from beanie import PydanticObjectId as ObjectId
+from pymongo.errors import ConnectionFailure, ExecutionTimeout, WriteConcernError
+
+from errors.items import PurchaseStatusUnknownError
 
 
 class ItemsRepository(BaseRepository):
     def __init__(self):
         super().__init__(Item)
 
-    async def insert_item(self, base_item, name, price=None):
-        # save data item to mongodb
-        item = self.model(
-            title=base_item.title,
-            description=base_item.description,
-            price=base_item.price if price is None else price,
-            name=name,
-        )
-
-        await item.insert()
+    async def insert_item(self, data):
+        """Insert a purchased item, marking write timeouts as uncertain outcomes."""
+        item = self.model(**data)
+        try:
+            await item.insert()
+        except (ConnectionFailure, ExecutionTimeout, WriteConcernError, TimeoutError) as exc:
+            raise PurchaseStatusUnknownError("The purchase write may still complete") from exc
         return item
 
+    async def exists(self, item_id):
+        """Check whether an item with the supplied ID is stored."""
+        return await self.model.get_pymongo_collection().find_one({"_id": ObjectId(item_id)}) is not None
+
     async def get_user_items(self, name):
-        # get user buy items
+        """Return purchased items belonging to the user, newest first."""
         return await self.model.find(
             self.model.name == name
         ).sort(-self.model.date).to_list()

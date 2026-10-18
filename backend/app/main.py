@@ -4,15 +4,15 @@ from pymongo import AsyncMongoClient
 from contextlib import asynccontextmanager
 
 from models.models import *
-from models.settings import settings, baseSettings
+from models.settings import settings
 from tasks import task_service
 from tasks.scheduler import task_update_scheduler
 
-from users.requests import users_days_and_last_mul_expired
+from users import user_service
 from api.core.security import load_security_handle_errors
 from migrations.boards import migrate_tasks_to_boards
 from routers import init_router
-from utils import load_data
+from base.utils import load_data
 
 import beanie
 import uvicorn
@@ -33,11 +33,10 @@ async def main(app: FastAPI):
 
         await migrate_tasks_to_boards()
         await task_service.update()
-        await users_days_and_last_mul_expired()
+        await user_service.refresh_expired_bonuses()
         load_security_handle_errors(app)
 
-        if collection == baseSettings.test_collection_name:
-            await load_data()
+        await load_data()
 
         async with task_update_scheduler():
             logging.info("ROLe is starting...")
@@ -66,5 +65,4 @@ app.add_middleware(
 )
 
 if __name__ == "__main__":
-    settings.collection_name = baseSettings.collection_name
-    uvicorn.run(app, host="127.0.0.1", port=7878)
+    uvicorn.run(app, host="127.0.0.1", port=8111)

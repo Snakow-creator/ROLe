@@ -11,11 +11,11 @@ export default defineConfig(({mode}) => {
       react(),
       tailwindcss(),
     ],
-    // api remover if /api in url, return 0.0.0.0:7878
+    // Forward local API requests to the development backend.
     server: {
       proxy: {
         '/api': {
-          target: 'http://localhost:7878',
+          target: 'http://127.0.0.1:8111',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, '') // remove /api
         }

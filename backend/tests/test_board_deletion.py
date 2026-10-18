@@ -97,7 +97,7 @@ async def test_reload_and_migration_do_not_recreate_deleted_board(board_database
     board_id = db.boards.insert_one({'username': 'alice', 'title': 'Простые', 'order': 0}).inserted_id
     db.tasks.insert_one({'user': 'alice', 'board_id': str(board_id), 'completed': True})
     monkeypatch.setattr(task_handlers.task_service, 'update', AsyncMock())
-    monkeypatch.setattr(task_handlers.task_repo, 'get_user_tasks', AsyncMock(return_value=[]))
+    monkeypatch.setattr(task_handlers.task_service.task_repo, 'get_user_tasks', AsyncMock(return_value=[]))
     with make_client() as client:
         assert client.delete(f'/delete/board/{board_id}').status_code == 200
         assert client.get('/tasks').json()['boards'] == []
@@ -129,9 +129,9 @@ def test_deletion_compacts_order_and_new_board_uses_length(board_database, delet
 
 @pytest.mark.parametrize('board', [None, SimpleNamespace(username='bob')])
 def test_task_cannot_be_created_on_deleted_or_foreign_board(monkeypatch, board):
-    monkeypatch.setattr(task_handlers.board_repo, 'get', AsyncMock(return_value=board))
+    monkeypatch.setattr(task_handlers.task_service.board_repo, 'get', AsyncMock(return_value=board))
     insert = AsyncMock()
-    monkeypatch.setattr(task_handlers.task_repo, 'insert_task', insert)
+    monkeypatch.setattr(task_handlers.task_service.task_repo, 'insert_task', insert)
     with make_client() as client:
         response = client.post('/add/task', json={
             'title': 'Квест', 'description': '',
@@ -143,7 +143,7 @@ def test_task_cannot_be_created_on_deleted_or_foreign_board(monkeypatch, board):
 
 def test_task_rejects_invalid_board_id(monkeypatch):
     insert = AsyncMock()
-    monkeypatch.setattr(task_handlers.task_repo, 'insert_task', insert)
+    monkeypatch.setattr(task_handlers.task_service.task_repo, 'insert_task', insert)
     with make_client() as client:
         response = client.post('/add/task', json={
             'title': 'Квест', 'description': '', 'board_id': 'invalid', 'date': None,
@@ -154,15 +154,15 @@ def test_task_rejects_invalid_board_id(monkeypatch):
 
 def test_task_can_be_created_on_owned_board_with_canonical_id(monkeypatch):
     board_id = PydanticObjectId('0123456789abcdef01234567')
-    monkeypatch.setattr(task_handlers.board_repo, 'get', AsyncMock(return_value=SimpleNamespace(username='alice', id=board_id)))
+    monkeypatch.setattr(task_handlers.task_service.board_repo, 'get', AsyncMock(return_value=SimpleNamespace(username='alice', id=board_id)))
     insert = AsyncMock()
-    monkeypatch.setattr(task_handlers.task_repo, 'insert_task', insert)
+    monkeypatch.setattr(task_handlers.task_service.task_repo, 'insert_task', insert)
     with make_client() as client:
         response = client.post('/add/task', json={
             'title': 'Квест', 'description': '', 'board_id': str(board_id).upper(), 'date': None,
         })
     assert response.status_code == 200
     insert.assert_awaited_once()
-    creds, owner = insert.await_args.args
-    assert owner == 'alice'
-    assert creds.board_id == str(board_id)
+    data = insert.await_args.args[0]
+    assert data['user'] == 'alice'
+    assert data['board_id'] == str(board_id)

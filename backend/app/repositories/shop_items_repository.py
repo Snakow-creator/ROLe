@@ -13,18 +13,11 @@ class ShopItemsRepository(BaseRepository):
             ShopItem.creator == name,
         ).to_list()
 
-    # add new shop item
-    async def insert_item(self, creds: dict):
-        shop_item = ShopItem(
-            title=creds["title"],
-            description=creds["description"],
-            price=creds["price"],
-            creator=creds["creator"],
-            type=creds["type"],
-            min_level=creds["min_level"],
-        )
+    async def insert_item(self, data):
+        """Insert shop item fields prepared by the item service."""
+        shop_item = self.model(**data)
+        return await self.model.insert_one(shop_item)
 
-        await self.model.insert_one(shop_item)
-
-
-
+    async def delete_item(self, item):
+        """Delete a previously loaded shop item."""
+        await item.delete()
