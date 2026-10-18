@@ -2,6 +2,7 @@ from base.config import BaseRepository
 from models.models import Task
 
 from datetime import datetime, timezone
+from base.task_timing import scheduled_datetime
 
 
 class TaskRepository(BaseRepository):
@@ -34,25 +35,27 @@ class TaskRepository(BaseRepository):
 
         return tasks
 
-    async def update_expired_task(self, board_id, border):
+    async def update_expired_task(self, board_id, date_filter):
         await self.model.find(
             {
                 "board_id": {"$in": board_id},
                 "inactive": False,
                 "completed": False,
-                "date": {"$lte": border}
+                "date": date_filter
             }
         ).update({"$set": {"inactive": True}})
 
 
     async def insert_task(self, creds, name):
         # insert task with data to mongodb
+        created_at = datetime.now(timezone.utc)
         task = self.model(
           title=creds.title,
           description=creds.description,
           board_id=creds.board_id,
           user=name,
-          date=creds.date,
+          created_at=created_at,
+          date=scheduled_datetime(creds.date) if creds.date is not None else created_at,
         )
 
         await task.insert()

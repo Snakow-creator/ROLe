@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime, timezone
 
 from models.schemas import TaskSchema
-from models.models import Task, User
+from models.models import PlanEntry, Task, User
 from beanie import PydanticObjectId
 
 from tasks.requests import complete_task, uncomplete_task, delete_task
@@ -86,7 +86,16 @@ async def edit_delete_task(
     if task.user != user["name"]:
         raise HTTPException(status_code=401, detail="Unauthorized, this task is not your")
 
-    await task.delete()
+    if task.plan_entry_id:
+        # Keep the occurrence as a cancelled snapshot; the scheduler must not recreate it.
+        await PlanEntry.get_pymongo_collection().update_one(
+            {"_id": PydanticObjectId(task.plan_entry_id), "user": user["name"]},
+            {"$set": {"cancelled": True, "completed": task.completed, "complete_date": task.complete_date}},
+        )
+        # Retain the reward snapshot, so restoring a planned quest cannot award it twice.
+        await task.update({"$set": {"inactive": True}})
+    else:
+        await task.delete()
     res = await delete_task(task)
     return res
 

@@ -1,7 +1,7 @@
 from pydantic import Field, ConfigDict
 from beanie import Document, Indexed
 from pymongo import IndexModel, ASCENDING
-from typing import Annotated, Optional
+from typing import Annotated, Literal, Optional
 
 from datetime import datetime, timezone
 
@@ -93,9 +93,13 @@ class Task(Document):
     description: str = Field(max_length=255, description="Описание квеста")
     board_id: str = Field(min_length=1, max_length=50, description="ID канбана")
     user: str = Field(description="Пользователь, который зарегистрировал квест")
-    # дата создания и завершения
-    date: Optional[datetime] = datetime.now(timezone.utc).replace(
-        hour=0, minute=0, second=0, microsecond=0
+    plan_entry_id: str | None = Field(default=None, description="Связанная запись недельного плана")
+    # У старых задач точное время создания неизвестно.
+    created_at: Optional[datetime] = Field(default=None, description="Точное время создания квеста")
+    # время появления и завершения
+    date: Optional[datetime] = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Дата и время появления квеста",
     )
     complete_date: Optional[datetime] = Field(
         default=None, description="Дата завершения квеста"
@@ -113,7 +117,17 @@ class Task(Document):
 
     class Settings:
         name = "tasks"
-        indexes = [IndexModel([("user", ASCENDING), ("board_id", ASCENDING), ("position", ASCENDING)])]
+        indexes = [
+            IndexModel([("user", ASCENDING), ("board_id", ASCENDING), ("position", ASCENDING)]),
+            IndexModel([
+                ("board_id", ASCENDING), ("inactive", ASCENDING),
+                ("completed", ASCENDING), ("date", ASCENDING),
+            ]),
+            IndexModel(
+                [("plan_entry_id", ASCENDING)], unique=True,
+                partialFilterExpression={"plan_entry_id": {"$type": "string"}},
+            ),
+        ]
 
 
 class Notice(Document):
@@ -162,4 +176,61 @@ class Board(Document):
         name = "boards"
         indexes = [
             IndexModel([("username", ASCENDING), ("order", ASCENDING)]),
+        ]
+
+
+class PlanTemplate(Document):
+    user: str
+    series_id: str | None = None
+    kind: Literal["task", "goal"] = "task"
+    title: str = Field(min_length=1, max_length=100)
+    description: str = Field(default="", max_length=255)
+    weekday: int = Field(default=0, ge=0, le=6)
+    time: str | None = None
+    end_time: str | None = None
+    board_id: str | None = None
+    goal_template_id: str | None = None
+    starts_on: str
+    ends_before: str | None = None
+    generated_through: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    model_config = ConfigDict(extra="forbid")
+
+    class Settings:
+        name = "plan_templates"
+        indexes = [
+            IndexModel([("user", ASCENDING), ("starts_on", ASCENDING)]),
+            IndexModel([("series_id", ASCENDING)], unique=True, partialFilterExpression={"series_id": {"$type": "string"}}),
+        ]
+
+
+class PlanEntry(Document):
+    user: str
+    kind: Literal["task", "goal"] = "task"
+    title: str = Field(min_length=1, max_length=100)
+    description: str = Field(default="", max_length=255)
+    week_start: str
+    day: str
+    time: str | None = None
+    end_time: str | None = None
+    board_id: str | None = None
+    board_title: str | None = None
+    goal_id: str | None = None
+    template_id: str | None = None
+    # A copied one-off task keeps its series, too, making week copying idempotent.
+    series_id: str
+    completed: bool = False
+    complete_date: datetime | None = None
+    cancelled: bool = False
+    cancelled_by_series: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    model_config = ConfigDict(extra="forbid")
+
+    class Settings:
+        name = "plan_entries"
+        indexes = [
+            IndexModel([("user", ASCENDING), ("week_start", ASCENDING), ("kind", ASCENDING)]),
+            IndexModel([("series_id", ASCENDING), ("week_start", ASCENDING)], unique=True),
         ]

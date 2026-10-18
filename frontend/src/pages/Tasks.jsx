@@ -7,6 +7,7 @@ import DeleteBoardDialog, { TrashIcon } from "../components/boards/DeleteBoardDi
 import { deleteBoard } from "../services/apiService/boards";
 import Spinner from "../components/Spinner";
 import { getTasks, completeTask, unCompleteTask, deleteTask } from "../services/apiService/tasks";
+import { mergeTaskRefresh, startTaskAutoRefresh } from '../services/apiService/taskRefresh';
 
 import { cn } from "../hooks/utils";
 import { useNotify } from "../context/NotificationContext";
@@ -30,7 +31,7 @@ function Task(creds) {
   // className objects
   const [classTitle, setClassTitle] = useState("");
   const [showSubmit, setShowSubmit] = useState(false);
-  const [isSubmit, setIsSubmit] = useState(false);
+  const isSubmit = Boolean(creds.completed);
   const [trashSrc, setTrashSrc] = useState("/task/trash.png");
   const [isPending, setIsPending] = useState(false);
   const pendingRef = useRef(false);
@@ -51,10 +52,11 @@ function Task(creds) {
     if (pendingRef.current) return;
     pendingRef.current = true;
     setIsPending(true);
+    creds.onMutationStart();
     const action = isSubmit ? 'uncomplete' : 'complete';
     try {
       const data = await (isSubmit ? unCompleteTask : completeTask)({ id: creds.id });
-      setIsSubmit(!isSubmit);
+      creds.onStatusChange(creds.id, !isSubmit);
       if (isSubmit) {
         creds.onNoticeReturnTask(data.notice);
         if (data.notice_down_level) creds.onNoticeDownLevel(data.notice_down_level);
@@ -69,6 +71,7 @@ function Task(creds) {
     } finally {
       pendingRef.current = false;
       setIsPending(false);
+      creds.onMutationEnd();
     }
   }
 
@@ -76,6 +79,7 @@ function Task(creds) {
     if (pendingRef.current) return;
     pendingRef.current = true;
     setIsPending(true);
+    creds.onMutationStart();
     try {
       const data = await deleteTask({ id: creds.id });
       creds.onNoticeDeleteTask(data.notice);
@@ -86,6 +90,7 @@ function Task(creds) {
       pendingRef.current = false;
       setIsPending(false);
       setTrashSrc('/task/trash.png');
+      creds.onMutationEnd();
     }
   }
 
@@ -186,11 +191,15 @@ function CanbanDesk(creds) {
         <div className="mt-2 space-y-2 w-full">
           {creds.tasks
             .filter(task => task.board_id === creds.board_id)
-            .map(({ _id, title, description }) => (
+            .map(({ _id, title, description, completed }) => (
               <Task key={_id}
                 id={_id}
                 title={title}
                 description={description}
+                completed={completed}
+                onStatusChange={creds.onStatusChange}
+                onMutationStart={creds.onMutationStart}
+                onMutationEnd={creds.onMutationEnd}
                 onUpdate={creds.onUpdate}
                 onNotice={creds.onNotice}
                 onNoticeUpLevel={creds.onNoticeUpLevel}
@@ -217,6 +226,8 @@ function CanbanDesk(creds) {
                 onNoticeCreateTask={creds.onNoticeCreateTask}
                 onNoticeErrorCreateTask={creds.onNoticeErrorCreateTask}
                 onUpdate={creds.onUpdate}
+                onMutationStart={creds.onMutationStart}
+                onMutationEnd={creds.onMutationEnd}
                 board_id={creds.board_id} />
             </div>
           ) : (
@@ -249,31 +260,67 @@ export default function Tasks() {
   const deletingBoardRef = useRef(false);
   const deletedBoardIdsRef = useRef(new Set());
   const createBoardButtonRef = useRef(null);
+  const latestFetchRef = useRef(0);
+  const activeFetchesRef = useRef(0);
+  const pendingMutationsRef = useRef(0);
+  const refreshPausedRef = useRef(false);
 
   const { push, removeByKey } = useNotify();
 
 
-  const fetchTasks = useCallback(async ({ notifyError = true } = {}) => {
-    setLoadError('');
+  const fetchTasks = useCallback(async ({ notifyError = true, background = false } = {}) => {
+    if (background && (
+      activeFetchesRef.current || pendingMutationsRef.current ||
+      deletingBoardRef.current || refreshPausedRef.current
+    )) return;
+    const requestId = ++latestFetchRef.current;
+    activeFetchesRef.current += 1;
+    if (!background) setLoadError('');
     try {
       const response = await getTasks();
-      setTasks(response.data.tasks.filter(task => !deletedBoardIdsRef.current.has(task.board_id)));
-      setBoards(response.data.boards.filter(board => !deletedBoardIdsRef.current.has(board._id)));
+      if (requestId !== latestFetchRef.current) return;
+      const nextTasks = response.data.tasks.filter(task => !deletedBoardIdsRef.current.has(task.board_id));
+      const nextBoards = response.data.boards.filter(board => !deletedBoardIdsRef.current.has(board._id));
+      setTasks(current => background ? mergeTaskRefresh(current, nextTasks, nextBoards) : nextTasks);
+      setBoards(nextBoards);
+      setLoadError('');
+      refreshPausedRef.current = false;
       removeByKey('error_load_tasks');
       return response;
     } catch (error) {
+      if (requestId !== latestFetchRef.current) return;
+      if (isSessionExpiredError(error)) refreshPausedRef.current = true;
+      if (background) return;
       setLoadError(getRequestErrorMessage(error, 'Не удалось загрузить доски и квесты.'));
       if (notifyError && !isSessionExpiredError(error)) {
         push(new ErrorLoadTasksNotification(error, () => fetchTasks()));
       }
     } finally {
-      setIsLoading(false);
+      activeFetchesRef.current -= 1;
+      if (requestId === latestFetchRef.current) setIsLoading(false);
     }
   }, [push, removeByKey]);
 
   useEffect(() => {
     fetchTasks();
+    const stopRefresh = startTaskAutoRefresh(() => fetchTasks({ background: true }));
+    return () => {
+      stopRefresh();
+      latestFetchRef.current += 1;
+    };
   }, [fetchTasks]);
+
+  const handleMutationStart = () => {
+    pendingMutationsRef.current += 1;
+    // A request started before this action must not overwrite its result.
+    latestFetchRef.current += 1;
+  };
+  const handleMutationEnd = () => {
+    pendingMutationsRef.current -= 1;
+  };
+  const handleTaskStatusChange = (id, completed) => {
+    setTasks(current => current.map(task => task._id === id ? { ...task, completed } : task));
+  };
 
   const handleNotice = async (notice) => {
     push(new TaskSubmitNotification(notice));
@@ -315,6 +362,7 @@ export default function Tasks() {
   }
 
   const handleBoardCreated = (board) => {
+    latestFetchRef.current += 1;
     setBoards(current => [...current, board].sort((left, right) =>
       left.order - right.order || left._id.localeCompare(right._id)
     ));
@@ -327,6 +375,7 @@ export default function Tasks() {
     const board = boardToDelete;
     deletingBoardRef.current = true;
     setIsDeletingBoard(true);
+    handleMutationStart();
     setDeleteBoardError('');
     try {
       try {
@@ -353,6 +402,7 @@ export default function Tasks() {
     } finally {
       deletingBoardRef.current = false;
       setIsDeletingBoard(false);
+      handleMutationEnd();
     }
   };
 
@@ -381,6 +431,9 @@ export default function Tasks() {
               setBoardToDelete(board);
             }}
             onUpdate={handleUpdate}
+            onStatusChange={handleTaskStatusChange}
+            onMutationStart={handleMutationStart}
+            onMutationEnd={handleMutationEnd}
             onNotice={handleNotice}
             onNoticeUpLevel={handleNoticeUpLevel}
             onNoticeReturnTask={handleNoticeReturnTask}
