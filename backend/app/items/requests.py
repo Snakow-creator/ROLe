@@ -1,58 +1,77 @@
-from repositories import user_repo, shop_items_repo, items_repo
+"""Validation, data preparation and response formatting for shop items."""
 
-from web_notices import buy_item_notice
-from users.requests import deprive_points_buy_item
-
-from errors.points import NotEnoughSpointsError
 from fastapi import HTTPException
-from fastapi.responses import JSONResponse
-from web_notices import error_item_notice
+from beanie import PydanticObjectId as ObjectId
+
+from base.format import fmt_points
+from web_notices import buy_item_notice, error_item_notice
 
 
-async def get_items(level, name):
-    # get objects
-    user = await user_repo.get_by_name(name)
-    items_list = await shop_items_repo.get_by_min_level(level, name)
-
-    for id in range(len(items_list)):
-        stock_price = items_list[id].price
-        items_list[id].price = stock_price * user.sale_shop
-
-    return items_list
+def discounted_items(items, discount):
+    """Return item copies with discounted prices, preserving the source documents."""
+    return [item.model_copy(update={"price": item.price * discount}) for item in items]
 
 
-async def buy_item(id, name):
-    item = await shop_items_repo.get(id) # get item
-    user = await user_repo.get_by_name(name) # get user
-
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+def validate_item_owner(item, name):
+    """Reject missing items and items owned by another user."""
     if item is None or item.creator != name:
         raise HTTPException(status_code=404, detail="Item not found")
+
+
+def validate_purchase(user, item, name):
+    """Check that the user exists, owns the item and meets its level requirement."""
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    validate_item_owner(item, name)
     if user.level < item.min_level:
         raise HTTPException(status_code=403, detail="Not enough level")
 
-    price = item.price * user.sale_shop # calculate price
 
-    try:
-        balance_before = await deprive_points_buy_item(user, price)
-    except NotEnoughSpointsError as e:
-        return JSONResponse(
-                status_code=402,
-                content={
-                    "error": "not_enough_spoints",
-                    "message": str(e),
-                    "notice": error_item_notice(str(e)),
-                },
-            )
-
-    notice = buy_item_notice(user, price, item, balance_before=balance_before)
-
-    # insert buy item in db
-    await items_repo.insert_item(item, name, price=price)
-
+def build_item_data(creds, name):
+    """Prepare item fields with a trimmed title and a minimum level of one."""
+    title = creds.title.strip()
+    if not title:
+        raise HTTPException(
+            status_code=422,
+            detail={"message": "Invalid title", "field": "title", "error": "Invalid title"},
+        )
     return {
-            "message": f"Item {item.title} bought",
-            "title": item.title,
-            "notice": notice,
-        }
+        "creator": name,
+        "title": title,
+        "type": creds.type,
+        "description": creds.description,
+        "price": creds.price,
+        "min_level": max(1, creds.min_level),
+    }
+
+
+def build_purchase_data(item, name, price):
+    """Prepare a purchase with a stable ID for verifying the result of a failed write."""
+    return {
+        "_id": ObjectId(),
+        "title": item.title,
+        "description": item.description,
+        "price": price,
+        "name": name,
+    }
+
+
+def insufficient_balance_data(message):
+    """Build error data without choosing an HTTP response type or status."""
+    return {
+        "error": "not_enough_spoints",
+        "message": message,
+        "notice": error_item_notice(message),
+    }
+
+
+def purchase_response(user, item, price, balance_before):
+    """Build a purchase response using the actual paid price and previous balance."""
+    before = fmt_points(user.Spoints + price if balance_before is None else balance_before)
+    after = fmt_points(user.Spoints)
+    str_price = fmt_points(abs(price))
+    return {
+        "message": f"Item {item.title} bought",
+        "title": item.title,
+        "notice": buy_item_notice(item.title, before=before, after=after, str_price=str_price),
+    }

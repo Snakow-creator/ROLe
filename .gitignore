@@ -76,6 +76,8 @@ backend/tests/*
 !backend/tests/test_gameplay.py
 !backend/tests/test_task_*.py
 !backend/tests/test_plan*.py
+!backend/tests/test_security.py
+!backend/tests/test_users.py
 
 # Logs
 logs

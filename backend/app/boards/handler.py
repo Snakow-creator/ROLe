@@ -3,7 +3,7 @@ from beanie import PydanticObjectId
 
 from api.core.security import security
 from models.schemas import BoardCreateSchema
-from repositories import board_repo
+from boards import board_service
 
 
 router = APIRouter(tags=["boards"])
@@ -18,7 +18,7 @@ async def add_board(
     creds: BoardCreateSchema,
     user=Depends(security.get_current_subject),
 ):
-    board = await board_repo.insert_board(creds, user["name"])
+    board = await board_service.create_board(creds, user["name"])
     return {"message": "Board added", "board": board}
 
 
@@ -30,7 +30,7 @@ async def delete_board(
     id: PydanticObjectId,
     user=Depends(security.get_current_subject),
 ):
-    result = await board_repo.delete_board(id, user["name"])
+    result = await board_service.delete_board(id, user["name"])
     if result is None:
         raise HTTPException(status_code=404, detail="Board not found")
     return {"message": "Board deleted", "board_id": str(id), **result}

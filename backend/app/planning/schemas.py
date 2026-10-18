@@ -5,6 +5,7 @@ from beanie import PydanticObjectId
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
+# create entry
 class PlanEntryInput(BaseModel):
     kind: Literal["task", "goal"] = "task"
     title: str = Field(min_length=1, max_length=100)
@@ -37,6 +38,7 @@ class PlanEntryInput(BaseModel):
         return self
 
 
+# schema working when a entry is completed
 class PlanCompletionInput(BaseModel):
     completed: bool = Field(strict=True)
     model_config = ConfigDict(extra="forbid")

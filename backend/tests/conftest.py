@@ -56,6 +56,9 @@ class Collection:
     async def count_documents(self, query):
         return self.raw.count_documents(query)
 
+    async def distinct(self, field):
+        return self.raw.distinct(field)
+
 
 class Field:
     def __init__(self, name):

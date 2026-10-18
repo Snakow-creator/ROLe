@@ -1,59 +1,49 @@
 from beanie import PydanticObjectId as ObjectId
 
 from base.config import BaseRepository
-from models.models import Board, PlanEntry, PlanTemplate, Task
+from models.models import Board
 
 
 class BoardRepository(BaseRepository):
     def __init__(self):
         super().__init__(Board)
 
-    async def insert_board(self, creds, name):
-        boards = await self.get_boards(name)
-        order = len(boards)
-        board = self.model(
-            **creds.model_dump(),
-            username=name,
-            order=order,
-        )
+    async def count_user_boards(self, name):
+        """Count the user's boards without loading their documents."""
+        return await self.model.get_pymongo_collection().count_documents({"username": name})
+
+    async def insert_board(self, data):
+        """Insert board fields prepared by the board service."""
+        board = self.model(**data)
         await board.insert()
         return board
 
-    async def delete_board(self, board_id, name):
-        boards = self.model.get_pymongo_collection()
-        query = {"_id": ObjectId(board_id), "username": name}
-        board = await boards.find_one(query)
-        if board is None:
-            return None
-
-        # Preserve plan history before the board's quest documents are removed.
-        linked = await Task.get_pymongo_collection().find({
-            "board_id": str(board_id), "user": name, "plan_entry_id": {"$type": "string"},
-        }).to_list(length=None)
-        for task in linked:
-            await PlanEntry.get_pymongo_collection().update_one(
-                {"_id": ObjectId(task["plan_entry_id"]), "user": name},
-                {"$set": {"board_id": None, "completed": task.get("completed", False), "complete_date": task.get("complete_date")}},
-            )
-        await PlanTemplate.get_pymongo_collection().update_many(
-            {"user": name, "board_id": str(board_id)}, {"$set": {"board_id": None}},
-        )
-        await PlanEntry.get_pymongo_collection().update_many(
-            {"user": name, "board_id": str(board_id)}, {"$set": {"board_id": None}},
-        )
-
-        # Keep the board available for retry if task cleanup fails. The default
-        # standalone MongoDB installation does not support transactions.
-        result = await Task.get_pymongo_collection().delete_many({
-            "board_id": str(board_id), "user": name,
+    async def get_owned_board(self, board_id, name):
+        """Find a board by ID only among the user's boards."""
+        return await self.model.get_pymongo_collection().find_one({
+            "_id": ObjectId(board_id), "username": name,
         })
-        deleted = await boards.delete_one(query)
-        if deleted.deleted_count:
-            await boards.update_many(
-                {"username": name, "order": {"$gt": board.get("order", 0)}},
-                {"$inc": {"order": -1}},
-            )
-        return {"title": board["title"], "deleted_tasks": result.deleted_count}
+
+    async def delete_board(self, board_id, name):
+        """Delete an owned board and report whether it was removed."""
+        result = await self.model.get_pymongo_collection().delete_one({
+            "_id": ObjectId(board_id), "username": name,
+        })
+        return bool(result.deleted_count)
+
+    async def compact_order(self, name, after_order):
+        """Shift the user's subsequent board positions down by one."""
+        return await self.model.get_pymongo_collection().update_many(
+            {"username": name, "order": {"$gt": after_order}}, {"$inc": {"order": -1}},
+        )
+
+    async def change_completed_count(self, board, amount):
+        """Adjust a loaded board's completed-task count."""
+        await board.update({"$inc": {"completed_tasks": amount}})
+
+    async def get_board_documents(self, name):
+        """Return the user's board documents for building the weekly plan."""
+        return await self.model.get_pymongo_collection().find({"username": name}).to_list(length=None)
 
     async def get_boards(self, name):
         # get boards and sort by order
@@ -64,10 +54,6 @@ class BoardRepository(BaseRepository):
         boards.sort(key=lambda x: (x.order, str(x.id)))
 
         return boards
-
-    async def get_award_by_board(self, board_id):
-        # get board by id
-        return await self.model.get(ObjectId(board_id))
 
     async def get_expire_boards(self, name=None):
         # get boards with expire days

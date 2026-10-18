@@ -102,6 +102,19 @@ ___
 ![Профиль](assets/images/preview_profile.png)
 ___
 
+### Автоматические проверки GitHub Actions
+
+Workflow `.github/workflows/deploy.yml` запускается при push в `main`,
+pull request в `main` и вручную через Actions → ROLe CI → Run workflow.
+Он запускает тесты backend, тесты и сборку frontend, затем собирает Docker-образы
+и проверяет запуск MongoDB, backend, nginx, страницу `/plan` и проксирование `/api/`.
+При ошибке запуска выводятся статус контейнеров и их логи.
+
+Проверки используют тестовые настройки и отдельный том MongoDB на временном
+GitHub runner. После проверки удаляются только контейнеры и том этого CI-проекта.
+Локальные данные не затрагиваются. Публикация сайта и образов отключена;
+добавлять secrets для CI не требуется.
+
 ### Установка ROLe в Docker-контейнер
 
 > **ROLe** - это не какой либо сайт, который хранит твои данные, это твое **собственное локальное приложение**
@@ -118,9 +131,12 @@ ___
 git clone https://github.com/Snakow-creator/ROLe.git .
 ```
 
-#### 2.1 (по желанию) Меняем конфигурацию .env
+#### 2.1 (по желанию) Меняем конфигурацию backend/.env.docker
 
 Можно здесь поменять адрес коллекции, и JWT-токен, но его можно не менять, если использовать его в локальной сети
+
+Docker использует базу из `COLLECTION_NAME`. Адрес MongoDB внутри Docker —
+`mongodb://mongo:27017`; локальный запуск использует отдельный файл `backend/.env`.
 
 #### 3. Устанавливаем Docker
 
@@ -139,10 +155,14 @@ docker compose build
 В терминале пишем
 
 ```terminal
-docker compose up
+docker compose up -d --build --wait --wait-timeout 180
 ```
 
-Все готово к использованию!
+Приложение доступно по адресу http://127.0.0.1:4173.
+Compose ждёт готовности MongoDB и backend перед запуском зависимых сервисов.
+Порты MongoDB и backend доступны только внутри Docker, поэтому локальную версию
+можно запускать параллельно на 5173 с backend на 8111 и MongoDB на 27017.
+После изменения кода повторите эту же команду для пересборки образов.
 
 
 <br>
@@ -171,20 +191,12 @@ until /usr/local/bin/docker info >/dev/null 2>&1; do
 done
 
 # 3. Переход в проект
-cd 'путь к проекту'
+cd 'путь к проекту' || exit 1
 
-# 4. Остановка старых контейнеров
-/usr/local/bin/docker compose down
+# 4. Пересборка и запуск контейнеров с ожиданием готовности
+/usr/local/bin/docker compose up -d --build --wait --wait-timeout 180 || exit 1
 
-# 5. Запуск контейнеров
-/usr/local/bin/docker compose up -d
-
-# 6. Ждём, пока веб-сервер поднимется
-until curl -sf http://127.0.0.1:4173 >/dev/null; do
-    sleep 2
-done
-
-# 7. Открытие сайта
+# 5. Открытие сайта
 open "http://127.0.0.1:4173"
 
 exit 0

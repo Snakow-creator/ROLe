@@ -53,7 +53,7 @@ def test_create_board_saves_settings_and_returns_it_on_reload(board_database, mo
         {"username": "bob", "title": "Чужая", "order": 99},
     ])
     monkeypatch.setattr(task_handlers.task_service, "update", AsyncMock())
-    monkeypatch.setattr(task_handlers.task_repo, "get_user_tasks", AsyncMock(return_value=[]))
+    monkeypatch.setattr(task_handlers.task_service.task_repo, "get_user_tasks", AsyncMock(return_value=[]))
 
     with make_client() as client:
         response = client.post("/add/board", json={

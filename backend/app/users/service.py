@@ -1,89 +1,52 @@
-from models.models import User
-
-from users.requests import user_repo
-
 from datetime import datetime, timezone
-from notices import web_notice
 
+from fastapi import HTTPException
+
+from base.task_timing import utc_datetime
+from errors.points import NotEnoughSpointsError
+from users import requests as user_requests
 
 
 class UserService:
-    @staticmethod
-    async def load_data(name):
-        # init object user, create data dict
-        # return user and data in object
-        user = await user_repo.get_by_name(name)
+    """Coordinate user rewards, streaks and account data through the user repository."""
 
-        data = {
-            "name": user.name,
-            "level": user.level,
-            "xp": user.xp,
-            "Spoints": user.Spoints,
-            "days_streak": user.days_streak,
-            "mul": user.mul,
-            "sale_shop": user.sale_shop,
-            "last_streak": user.last_streak.timestamp(),
-            "last_mul": user.last_mul.timestamp(),
-        }
+    def __init__(self, repository):
+        self.repository = repository
 
-        return data
+    async def load_data(self, name):
+        """Load a user and format their account data for login."""
+        user = await self.repository.get_by_name(name)
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user_requests.profile_data(user)
 
+    async def refresh_expired_bonuses(self, now=None):
+        """Reset expired streaks and multipliers while leaving recent users unchanged."""
+        now = utc_datetime(now or datetime.now(timezone.utc))
+        for user in await self.repository.find_all():
+            values = user_requests.expired_bonus_fields(user, now)
+            if values:
+                await self.repository.update_user(user, values=values)
 
-class WeeklyBonusService:
-    @staticmethod
-    async def claim(user: User):
-        # get time
-        time_now = datetime.now(timezone.utc)
-        await user.update({
-            "$inc": {"Spoints": 150, "xp": 150},
-            "$set": {
-                "penult_mul": user.mul,
-                "penult_sale_shop": user.sale_shop,
-                "penult_last_mul": user.last_mul,
-                "last_mul": time_now,
-                "mul": user.mul * 1.02, # x 2 % bonus
-                "sale_shop": user.sale_shop * 0.985 # * 1 % sale bonus
-            }
-        })
+    async def set_level(self, user, level):
+        """Set the level and award or revoke its balance bonus using the loaded user."""
+        points = user_requests.level_reward_points(user, level)
+        await self.repository.update_user(user, values={"level": level}, increments={"Spoints": points})
+        return {"message": "Success", "points": abs(points)}
 
-        mul = round(user.mul, 2)
-        sale_shop = round(user.sale_shop, 2)
+    async def change_rewards(self, user, points, xp, *, operation=1):
+        """Add or revoke the supplied points and XP amounts."""
+        await self.repository.update_user(user, increments={"Spoints": operation * points, "xp": operation * xp})
 
-        return web_notice(
-            title="Вы получили недельный бонус! 🎉",
-            message=f"Ваш множитель опыта теперь снова {mul}%, а скидка магазина {sale_shop}%, а Xp и Spoints увеличены на 150",
-            type="claim_weekly_bonus",
-        )
+    async def debit_purchase(self, user, price):
+        """Debit a purchase atomically and return the balance before payment."""
+        previous = await self.repository.debit_purchase(user.id, price)
+        if previous is None:
+            raise NotEnoughSpointsError
+        user.Spoints = previous["Spoints"] - price
+        return previous["Spoints"]
 
-    # return bonus to previus state
-    @staticmethod
-    async def revoke(user: User):
-        await user.update({
-            "$inc": {"Spoints": -150, "xp": -150},
-            "$set": {
-                "last_mul": user.penult_last_mul,
-                "mul": user.penult_mul,
-                "sale_shop": user.penult_sale_shop,
-            }
-        })
-
-        mul = round(user.mul, 2)
-        sale_shop = round(user.sale_shop, 2)
-
-        return web_notice(
-            title="Ваш бонус недели снят",
-            message=f"Ваш множитель опыта теперь снова {mul}%, а скидка магазина {sale_shop}%, а Xp и Spoints вернулись к прежнему уровню",
-            type="revoke_weekly_bonus",
-        )
-
-async def delete_task(task):
-    notice = web_notice(
-        title=f"Задача {task.title} удалена",
-        type="delete_task"
-    )
-
-    return {
-        "message": "Task deleted",
-        "title": task.title,
-        "notice": notice.model_dump(),
-    }
+    async def increment_streak(self, user, now=None):
+        """Increment the streak and record its latest update timestamp."""
+        now = utc_datetime(now or datetime.now(timezone.utc))
+        await self.repository.update_user(user, values={"last_streak": now}, increments={"days_streak": 1})
