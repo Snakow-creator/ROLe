@@ -86,6 +86,7 @@ export const logout = async (creds) => {
   const res = await api.post("/logout");
 
   localStorage.removeItem('access_token');
+  window.dispatchEvent(new Event('auth-change'));
   creds.setAuthFalse();
 
   return res
