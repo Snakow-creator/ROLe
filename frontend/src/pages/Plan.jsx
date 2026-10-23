@@ -154,7 +154,7 @@ export default function Plan() {
       {copyMessage && <p role="status" className="shrink-0 rounded-xl border border-green-100 bg-green-50 p-3 text-sm text-green-800">{copyMessage}</p>}
 
       {loading || !currentPlan ? <div className="flex flex-1 items-center justify-center">{loading ? <Spinner /> : <p className="text-sm text-[#7C8AA0]">План пока не загружен.</p>}</div> : <div className="min-h-0 flex-1 overflow-x-auto pb-1">
-        <div className="grid h-full min-w-[1120px] grid-cols-7 gap-3">
+        <div className="grid h-full min-w-[2032px] grid-cols-7 gap-3">
           {weekDays(week).map(({ day, title }, index) => {
             const entries = tasks.filter(entry => entry.day === day).sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99') || a._id.localeCompare(b._id));
             const isToday = day === today;
