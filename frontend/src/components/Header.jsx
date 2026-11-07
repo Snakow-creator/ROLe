@@ -6,90 +6,87 @@ import { getAvatar } from '../services/apiService/users';
 import { AVATAR_ASSETS } from '../data/data';
 import LinkHeader from './LinkHeader';
 
+const DEFAULT_AVATAR = AVATAR_ASSETS.avatar_default_1;
+
 export default function Header() {
-  const [bar, setBar] = useState(<></>);
-  const [navigation, setNavigation] = useState(<></>);
   const [auth, setAuth] = useState(null);
-  const [avatar, setAvatar] = useState(null);
+  const [avatar, setAvatar] = useState(DEFAULT_AVATAR);
 
   const logoutUser = async () => {
-    const setAuthFalse = () => {
+    await logout({ setAuthFalse: () => {
       setAuth(false);
-    }
+      setAvatar(DEFAULT_AVATAR);
+    } });
+  };
 
-    await logout({setAuthFalse});
-  }
-
-  const handleNavigation = () => {
-    // if auth is true
-    setNavigation(auth &&
-      // navigation, near right with logo
-      <nav aria-label="Основная навигация" className="flex min-w-0 items-center gap-1 overflow-x-auto sm:gap-4 lg:gap-8">
-        <LinkHeader to="/quests" className="shrink-0 whitespace-nowrap text-xs sm:text-sm lg:text-lg">мои квесты</LinkHeader>
-        <LinkHeader to="/plan" className="shrink-0 whitespace-nowrap text-xs sm:text-sm lg:text-lg">план недели</LinkHeader>
-        <LinkHeader to="/items" className="shrink-0 whitespace-nowrap text-xs sm:text-sm lg:text-lg">магазин</LinkHeader>
-      </nav>
-    )
-  }
-
-
-
-  const handleAuth = () => {
-    if (auth) {
-      setBar(
-        <>
-          <Link to="/profile" className='w-10 h-10 inline-block border overflow-hidden rounded-full'>
-            <img src={avatar} className="w-full h-full object-cover"/>
-          </Link>
-          <button className='cursor-pointer w-[30px] h-[30px]' onClick={logoutUser}>
-            <img src="/header/logout.svg"/>
-          </button>
-        </>
-      )
-    } else {
-      setBar(
-        <>
-          <LinkHeader to="/register">регистрация</LinkHeader>
-          <LinkHeader to="/login">войти</LinkHeader>
-        </>
-      )
-    }
-  }
   useEffect(() => {
-    const checkAuth = async () => {
-      const res = await getAuth();
-      setAuth(res.auth);
-    }
+    let active = true;
+    let revision = 0;
+    const checkProfile = async () => {
+      const current = ++revision;
+      const isCurrent = () => active && current === revision;
+      try {
+        const res = await getAuth();
+        if (!isCurrent()) return;
+        setAuth(Boolean(res?.auth));
+        setAvatar(DEFAULT_AVATAR);
 
-    const checkAvatar = async () => {
-      const onUpdateAvatar = avatarId => {
-        setAvatar(AVATAR_ASSETS[avatarId]);
+        if (res?.auth) {
+          await getAvatar(avatarId => {
+            if (isCurrent()) setAvatar(AVATAR_ASSETS[avatarId] || DEFAULT_AVATAR);
+          });
+        }
+      } catch (error) {
+        // Keep the default avatar if the profile request fails.
+        console.error('Не удалось загрузить профиль в шапке:', error);
       }
-      await getAvatar(onUpdateAvatar);
-    }
+    };
 
-    checkAvatar();
-    checkAuth();
+    checkProfile();
+    window.addEventListener('auth-change', checkProfile);
+    window.addEventListener('storage', checkProfile);
+    return () => {
+      active = false;
+      window.removeEventListener('auth-change', checkProfile);
+      window.removeEventListener('storage', checkProfile);
+    };
   }, []);
-
-  useEffect(() => {
-    handleAuth();
-    handleNavigation();
-  }, [auth]);
 
   return (
     <header className="fixed top-0 left-0 w-full bg-[#FAFBFF] z-50">
       <div className="flex items-center justify-between gap-3 px-3 py-2 md:px-4">
-        {/* logo */}
         <div className="flex min-w-0 items-center gap-3 sm:gap-8">
           <Link to="/" className="shrink-0">
             <h1 className="font-acme text-2xl md:text-3xl"><span className="sm:hidden">ROLe</span><span className="hidden sm:inline">Realms of Life</span></h1>
           </Link>
-          { navigation }
+          {auth && (
+            <nav aria-label="Основная навигация" className="flex min-w-0 items-center gap-1 overflow-x-auto sm:gap-4 lg:gap-8">
+              <LinkHeader to="/quests" className="shrink-0 whitespace-nowrap text-xs sm:text-sm lg:text-lg">мои квесты</LinkHeader>
+              <LinkHeader to="/plan" className="shrink-0 whitespace-nowrap text-xs sm:text-sm lg:text-lg">план недели</LinkHeader>
+              <LinkHeader to="/items" className="shrink-0 whitespace-nowrap text-xs sm:text-sm lg:text-lg">магазин</LinkHeader>
+            </nav>
+          )}
         </div>
 
         <div className="flex shrink-0 items-center gap-3 sm:gap-8">
-          { bar }
+          {auth ? (
+            <>
+              <Link to="/profile" aria-label="Профиль" className="inline-block h-10 w-10 shrink-0 overflow-hidden rounded-full border">
+                <img src={avatar} alt="Аватар профиля" className="h-full w-full object-cover" onError={event => {
+                  if (avatar !== DEFAULT_AVATAR) setAvatar(DEFAULT_AVATAR);
+                  else event.currentTarget.hidden = true;
+                }} />
+              </Link>
+              <button type="button" aria-label="Выйти из аккаунта" className="h-[30px] w-[30px] shrink-0 cursor-pointer" onClick={logoutUser}>
+                <img src="/header/logout.svg" alt="" />
+              </button>
+            </>
+          ) : auth === false ? (
+            <>
+              <LinkHeader to="/register">регистрация</LinkHeader>
+              <LinkHeader to="/login">войти</LinkHeader>
+            </>
+          ) : null}
         </div>
       </div>
       <hr className="shadow-2xl"/>
