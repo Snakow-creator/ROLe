@@ -28,6 +28,9 @@ class Document(SimpleNamespace):
             setattr(self, field, getattr(self, field, 0) + value)
         for field, value in changes.get("$set", {}).items():
             setattr(self, field, value)
+        for field, value in changes.get("$addToSet", {}).items():
+            existing = getattr(self, field)
+            setattr(self, field, list(dict.fromkeys([*existing, *value["$each"]])))
 
 
 class BalanceCollection:
@@ -48,7 +51,7 @@ class BalanceCollection:
 
 def user(**overrides):
     data = dict(
-        id="user-id", name="alice", level=1, xp=0, Spoints=0,
+        id="user-id", name="alice", level=1, xp=0, Spoints=0, unlocked_avatar_ids=[],
         mul=1, sale_shop=1, days_streak=1,
         last_streak=datetime.now(timezone.utc),
         last_mul=datetime.now(timezone.utc) - timedelta(days=7),
@@ -155,9 +158,14 @@ async def test_weekly_board_bonus_and_level_change_are_reversible(monkeypatch):
     assert (player.level, player.xp, player.Spoints) == (2, 415, 380)
     assert result["notice_up_level"]["type"] == "up_level"
     assert result["notice_weekly_claim_bonus"]["type"] == "claim_weekly_bonus"
+    assert set(player.unlocked_avatar_ids) == {
+        "standart_avatar1_man", "standart_avatar1_woman",
+        "standart_avatar2_man", "standart_avatar2_woman",
+    }
 
     result = await task_service.uncomplete_task(task.id, player.name)
     assert (player.level, player.xp, player.Spoints) == (1, 250, 0)
+    assert "standart_avatar2_woman" in player.unlocked_avatar_ids
     assert result["notice_down_level"]["type"] == "down_level"
     assert result["notice_weekly_revoke_bonus"]["type"] == "revoke_weekly_bonus"
     assert board.completed_tasks == 0

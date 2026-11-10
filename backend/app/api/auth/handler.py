@@ -2,17 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from authx import AuthXDependency
 
-from models.models import User
 from models.schemas import UserSchema, RegisterUserSchema
 from users import user_service
-from repositories import user_repo, board_repo
+from repositories import user_repo
 
 from api.core.crypt import hash_password, verify_password
 from api.auth.service import auth
 from api.core.config import test_data
 from api.core.security import security
-
-from levels.data import which_my_role
 
 router = APIRouter(tags=["auth"])
 
@@ -88,34 +85,3 @@ async def protected(
         return res
 
     return {"message": "AUTHORIZED", "auth": True, "expire": False}
-
-
-@router.get("/profile", dependencies=[Depends(security.access_token_required)])
-async def profile(
-    user: User = Depends(security.get_current_subject),
-):
-    try:
-        data = {
-            "name": user["name"],
-            "level": user["level"],
-            "role": which_my_role.get(user["level"], "Бог"),
-            "avatar": user["current_avatar"],
-            "xp": user["xp"],
-            "Spoints": user["Spoints"],
-            "days_streak": user["days_streak"],
-            "mul": user["mul"],
-            "sale_shop": user["sale_shop"],
-            "last_streak": user["last_streak"],
-            "last_mul": user["last_mul"],
-            "boards": [
-                {
-                    "_id": str(board.id),
-                    "title": board.title,
-                    "completed_tasks": board.completed_tasks,
-                }
-                for board in await board_repo.get_boards(user["name"]) # get boards to show complete tasks
-            ],
-        }
-        return data
-    except Exception:
-        raise HTTPException(status_code=404, detail="Not authorized")

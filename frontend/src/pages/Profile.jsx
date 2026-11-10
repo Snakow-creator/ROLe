@@ -1,98 +1,65 @@
-import { profile } from "../services/apiService/profile";
-import { AVATAR_ASSETS } from "../data/data";
-
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Outlet } from "react-router-dom";
 
 import Container from "../components/Container";
 import ProfileTabs from "../components/ProfileTabs";
-import Attribute from "../components/Attribute";
-
+import { getProfile } from "../services/apiService/profile";
+import { selectAvatar } from "../services/apiService/users";
 
 export default function Profile() {
-  const [activeTab, setActiveTab] = useState("info");
-  const [data, setData] = useState({});
-  const [handleSave, setHandleSave] = useState(<></>)
+  const [data, setData] = useState(null);
+  const [loadError, setLoadError] = useState("");
+  const [selectedAvatar, setSelectedAvatar] = useState(null);
+  const [savingAvatar, setSavingAvatar] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
-    const setCurrentData = (data) => {
-      setData(data);
-    }
-    profile(setCurrentData);
+    const controller = new AbortController();
+    getProfile(controller.signal).then(setData).catch(() => {
+      if (!controller.signal.aborted) setLoadError("Не удалось загрузить профиль.");
+    });
+    return () => controller.abort();
   }, []);
+
+  const chooseAvatar = (avatarId) => {
+    setSelectedAvatar(avatarId);
+    setSaveError("");
+  };
+
+  const saveAvatar = async () => {
+    setSavingAvatar(true);
+    setSaveError("");
+    try {
+      const avatar = await selectAvatar(selectedAvatar);
+      setData(previous => ({ ...previous, avatar }));
+      setSelectedAvatar(null);
+      window.dispatchEvent(new Event("avatar-change"));
+    } catch {
+      setSaveError("Не удалось сохранить аватар. Попробуй ещё раз.");
+    } finally {
+      setSavingAvatar(false);
+    }
+  };
+
+  if (!data) {
+    return (
+      <Container>
+        <p className="mt-12 text-center" role={loadError ? "alert" : "status"}>
+          {loadError || "Загружаем профиль…"}
+        </p>
+      </Container>
+    );
+  }
 
   return (
     <Container>
-      <div className="grid mt-12 w-[900px] mx-auto">
-
-        <ProfileTabs active={activeTab} onChange={setActiveTab} />
-
-        <div className="container relative p-6 px-8  text-left mx-auto rounded-b-2xl rounded bg-[#F9FAFE] shadow border- border-[#E5E9F0]">
-
-
-          {activeTab === "info" && (
-            <div>
-              <div className="w-[100px] h-[100px] absolute right-6">
-                <img src={AVATAR_ASSETS[data.avatar]} className="rounded-full" />
-              </div>
-              <div className="space-y-2">
-                <Attribute title="Имя:">{data.name}</Attribute>
-                <Attribute title="Роль:">{data.role}</Attribute>
-                <Attribute title="Уровень:">{data.level}</Attribute>
-                <Attribute title="Опыт:">{data.xp}</Attribute>
-                <Attribute title="Spoints:">{data.Spoints}</Attribute>
-                <Attribute title="Серия дней:">{data.days_streak}</Attribute>
-                <Attribute title="Множитель опыта:">{data.mul}</Attribute>
-                <Attribute title="Процент скидки:">{data.sale_shop}</Attribute>
-                {data.boards?.map(board => (
-                  <Attribute key={board._id} title={`Выполненные квесты (${board.title}):`}>
-                    {board.completed_tasks}
-                  </Attribute>
-                ))}
-              </div>
-            </div>
-          )}
-
-        {activeTab === "avatar" && (
-          <div className="flex gap-8 items-center">
-            {Object.entries(AVATAR_ASSETS).map(([key, src]) => (
-              <img
-                key={key}
-                src={src}
-                onClick={() => onSelectAvatar(key)}
-                className={`w-20 h-20 rounded-full cursor-pointer border-4 ${
-                  data.avatar === key ? "border-[#4A6CF7]" : "border-transparent"
-                }`}
-              />
-            ))}
-            <span className="text-lg font-bold">Текущий аватар</span>
-          </div>
-        )}
-
-        {activeTab == "notice" && (
-          <div>
-
-          </div>
-        )
-        }
-
-        {activeTab === "edit" && (
-          <form className="space-y-3" onSubmit={handleSave}>
-            <input
-              className="w-full p-2 rounded-lg border border-[#E5E9F0] bg-white"
-              defaultValue={data.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Имя"
-            />
-            {/* остальные редактируемые поля */}
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-lg bg-[#4A6CF7] text-white"
-            >
-              Сохранить
-            </button>
-          </form>
-        )}
-
+      <div className="grid mt-12 w-full max-w-[900px] mx-auto">
+        <ProfileTabs />
+        <div className="container relative p-6 px-8 text-left mx-auto rounded-b-2xl rounded bg-[#F9FAFE] shadow border-[#E5E9F0]">
+          <Outlet context={{
+            data,
+            avatarPicker: { selectedAvatar, chooseAvatar, saveAvatar, savingAvatar, saveError },
+          }} />
         </div>
       </div>
     </Container>

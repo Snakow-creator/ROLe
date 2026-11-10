@@ -1,7 +1,6 @@
 import api from "./api";
 
-export const getAvatar = async (onUpdateAvatar) => {
-  const res = await api.get("/users/avatar")
-
-  onUpdateAvatar(res.data.avatar)
-}
+export const selectAvatar = async (avatarId) => {
+  const res = await api.put("/profile/avatar", { avatar_id: avatarId });
+  return res.data.avatar;
+};

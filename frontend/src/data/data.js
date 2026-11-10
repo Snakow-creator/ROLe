@@ -1,3 +1,5 @@
+import BASE_URL from "../data/config.js";
+
 export const filter_types_items = {
   "Всё": "all",
   "Отдых": "rest",
@@ -6,6 +8,6 @@ export const filter_types_items = {
 
 }
 
-export const AVATAR_ASSETS = {
-  "avatar_default_1": "/avatars/default_1.webp"
+export function avatarUrl(avatarId = "default_avatar_man") {
+  return `${BASE_URL}avatars/${encodeURIComponent(avatarId)}.png`;
 }

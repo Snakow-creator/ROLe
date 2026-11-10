@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "check:avatars": "node scripts/check-avatars.js",
+    "prebuild": "npm run check:avatars",
     "build": "vite build",
     "test": "node --test src/services/apiService/*.test.js",
     "lint": "eslint .",

@@ -2,11 +2,11 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
 import { logout, getAuth } from '../services/apiService/auth';
-import { getAvatar } from '../services/apiService/users';
-import { AVATAR_ASSETS } from '../data/data';
+import { getProfile } from '../services/apiService/profile';
+import { avatarUrl } from '../data/data';
 import LinkHeader from './LinkHeader';
 
-const DEFAULT_AVATAR = AVATAR_ASSETS.avatar_default_1;
+const DEFAULT_AVATAR = avatarUrl();
 
 export default function Header() {
   const [auth, setAuth] = useState(null);
@@ -32,22 +32,22 @@ export default function Header() {
         setAvatar(DEFAULT_AVATAR);
 
         if (res?.auth) {
-          await getAvatar(avatarId => {
-            if (isCurrent()) setAvatar(AVATAR_ASSETS[avatarId] || DEFAULT_AVATAR);
-          });
+          const profile = await getProfile();
+          if (isCurrent()) setAvatar(avatarUrl(profile.avatar));
         }
       } catch (error) {
-        // Keep the default avatar if the profile request fails.
         console.error('Не удалось загрузить профиль в шапке:', error);
       }
     };
 
     checkProfile();
     window.addEventListener('auth-change', checkProfile);
+    window.addEventListener('avatar-change', checkProfile);
     window.addEventListener('storage', checkProfile);
     return () => {
       active = false;
       window.removeEventListener('auth-change', checkProfile);
+      window.removeEventListener('avatar-change', checkProfile);
       window.removeEventListener('storage', checkProfile);
     };
   }, []);
@@ -72,7 +72,7 @@ export default function Header() {
           {auth ? (
             <>
               <Link to="/profile" aria-label="Профиль" className="inline-block h-10 w-10 shrink-0 overflow-hidden rounded-full border">
-                <img src={avatar} alt="Аватар профиля" className="h-full w-full object-cover" onError={event => {
+                <img key={avatar} src={avatar} alt="Аватар профиля" className="h-full w-full object-cover" onError={event => {
                   if (avatar !== DEFAULT_AVATAR) setAvatar(DEFAULT_AVATAR);
                   else event.currentTarget.hidden = true;
                 }} />

@@ -1,3 +1,4 @@
+from avatar.avatars import role_avatar_ids
 from base.config import BaseRepository
 from models.models import User
 from pymongo import ReturnDocument
@@ -19,13 +20,28 @@ class UserRepository(BaseRepository):
 
     async def update_user(self, user, *, values=None, increments=None):
         """Apply supplied field values and numeric increments to a loaded user."""
+        values = values or {}
+        increments = increments or {}
         changes = {}
         if values:
             changes["$set"] = values
         if increments:
             changes["$inc"] = increments
+        if "level" in values or increments.get("xp"):
+            level = values.get("level", user.level)
+            xp = user.xp + increments.get("xp", 0)
+            earned = set(user.unlocked_avatar_ids)
+            grants = [avatar_id for avatar_id in role_avatar_ids(level, xp) if avatar_id not in earned]
+            if grants:
+                changes["$addToSet"] = {"unlocked_avatar_ids": {"$each": grants}}
         if changes:
             await user.update(changes)
+
+    async def set_avatar(self, user_id, avatar_id):
+        result = await self.model.get_pymongo_collection().update_one(
+            {"_id": user_id}, {"$set": {"current_avatar": avatar_id}},
+        )
+        return result.matched_count > 0
 
     async def debit_purchase(self, user_id, price):
         """Debit only a sufficient balance and return the document before payment."""
