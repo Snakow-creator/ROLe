@@ -23,7 +23,7 @@ export default function App() {
       <div>
         <Header />
 
-        <main className='pt-[57px]'>
+        <main>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />

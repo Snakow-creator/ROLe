@@ -9,7 +9,7 @@ const TABS = [
 
 export default function ProfileTabs() {
   return (
-    <nav aria-label="Разделы профиля" className="flex flex-wrap gap-2 justify-center mb-4 rounded-t-3xl px-3 py-2 bg-[#F1F3FA] shadow border border-[#D5DAE5] sm:px-8">
+    <nav aria-label="Разделы профиля" className="flex flex-wrap justify-center gap-2 border-b border-[#D5DAE5] bg-[#F1F3FA] px-3 py-2 sm:gap-x-6 sm:px-8 sm:py-4">
       {TABS.map((tab) => (
         <NavLink
           key={tab.to}

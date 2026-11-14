@@ -53,9 +53,9 @@ export default function Profile() {
 
   return (
     <Container>
-      <div className="grid mt-12 w-full max-w-[900px] mx-auto">
+      <div className="mx-auto mt-12 w-full max-w-[900px] overflow-hidden rounded-t-3xl rounded-b-2xl border border-[#D5DAE5] bg-[#F9FAFE] shadow">
         <ProfileTabs />
-        <div className="container relative p-6 px-8 text-left mx-auto rounded-b-2xl rounded bg-[#F9FAFE] shadow border-[#E5E9F0]">
+        <div className="relative px-8 py-6 text-left">
           <Outlet context={{
             data,
             avatarPicker: { selectedAvatar, chooseAvatar, saveAvatar, savingAvatar, saveError },

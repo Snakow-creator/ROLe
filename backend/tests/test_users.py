@@ -100,7 +100,7 @@ def test_avatar_selection_persists_only_available_catalog_entries(database, monk
     db, _ = database
     db.users.insert_many([
         {"name": "alice", "hashed_password": "unused", "current_avatar": "avatar_default_1"},
-        {"name": "bob", "hashed_password": "unused", "level": 6},
+        {"name": "bob", "hashed_password": "unused", "level": 6, "Qpoints": 17, "Spoints": 42.5, "Tpoints": 8},
     ])
 
     async def get_by_name(name):
@@ -118,6 +118,7 @@ def test_avatar_selection_persists_only_available_catalog_entries(database, monk
         assert client.get("/profile").status_code == 401
         alice = client.get("/profile", headers=alice_headers).json()
         assert alice["avatar"] == "default_avatar_man"
+        assert (alice["Qpoints"], alice["Spoints"], alice["Tpoints"]) == (0, 0, 0)
         assert len(alice["avatars"]) == 42
         assert [avatar["id"] for avatar in alice["avatars"] if avatar["available"]] == [
             "default_avatar_man", "default_avatar_woman",
@@ -136,4 +137,6 @@ def test_avatar_selection_persists_only_available_catalog_entries(database, monk
 
         response = client.put("/profile/avatar", headers=bob_headers, json={"avatar_id": "standart_avatar3_woman"})
         assert response.json() == {"avatar": "standart_avatar3_woman"}
+        bob = client.get("/profile", headers=bob_headers).json()
+        assert (bob["Qpoints"], bob["Spoints"], bob["Tpoints"]) == (17, 42.5, 8)
         assert db.users.find_one({"name": "alice"})["current_avatar"] == "default_avatar_woman"

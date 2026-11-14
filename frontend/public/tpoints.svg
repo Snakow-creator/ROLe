@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <path id="tpoints-glint-field" d="M10 5.2h12l4.8 4.8v12L22 26.8H10L5.2 22V10Z"/>
+    <clipPath id="tpoints-glint-stone">
+      <use href="#tpoints-glint-field" fill="#fff"/>
+    </clipPath>
+    <linearGradient id="tpoints-glint-frame" x1="7" y1="4" x2="25" y2="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D6DBAB"/>
+      <stop offset=".42" stop-color="#85A582"/>
+      <stop offset=".72" stop-color="#426B5A"/>
+      <stop offset="1" stop-color="#A0B38A"/>
+    </linearGradient>
+    <linearGradient id="tpoints-glint-malachite" x1="6" y1="5" x2="25" y2="27" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#517E62"/>
+      <stop offset=".5" stop-color="#325F50"/>
+      <stop offset="1" stop-color="#23433B"/>
+    </linearGradient>
+    <linearGradient id="tpoints-glint-letter" x1="9" y1="8" x2="21" y2="24" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E5EFC1"/>
+      <stop offset=".45" stop-color="#B5D895"/>
+      <stop offset="1" stop-color="#6CA777"/>
+    </linearGradient>
+  </defs>
+  <path d="M9 2.9h14L29.1 9v14L23 29.1H9L2.9 23V9Z" fill="url(#tpoints-glint-frame)" stroke="#304F43" stroke-width="1.05" stroke-linejoin="round"/>
+  <use href="#tpoints-glint-field" fill="url(#tpoints-glint-malachite)" stroke="#B8C79C" stroke-width=".5"/>
+  <g clip-path="url(#tpoints-glint-stone)" stroke="#92BB91" stroke-linecap="round">
+    <path d="M4 19c4-5 8-5 12-9s7-4 12-4" stroke-width=".9" opacity=".44"/>
+    <path d="M3 22c4.6-5.5 9-6.2 13.4-10.2 4.4-4 7.2-3.9 12.8-4.6" stroke-width=".55" opacity=".4"/>
+    <path d="M8 28c2.9-5.6 6.7-6.8 12.6-10.7 3.6-2.4 5.4-4.2 9.4-5.8" stroke-width="1" opacity=".36"/>
+  </g>
+  <path d="M8.3 8.1h15.4l.8.8V12h-6.2v5.05l2.25-1.2v2.7l-2.25 1.2v4.05h-4.6V12H7.5V8.9Z" fill="url(#tpoints-glint-letter)" stroke="#264D3F" stroke-width=".95" stroke-linejoin="round"/>
+  <path d="M9.2 9.2h9.1" stroke="#F1F8DA" stroke-width=".45" stroke-linecap="round"/>
+</svg>

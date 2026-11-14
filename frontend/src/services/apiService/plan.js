@@ -1,4 +1,5 @@
 import api from './api';
+import { notifyBalanceChanged } from './profile';
 import { getRequestErrorMessage } from './requestErrors';
 
 export async function getPlan(week) {
@@ -18,7 +19,9 @@ export async function restorePlanEntry(id) {
 }
 
 export async function completePlanEntry(id, completed) {
-  return (await api.put(`/plan/entries/${id}/completion`, { completed })).data;
+  const res = await api.put(`/plan/entries/${id}/completion`, { completed });
+  notifyBalanceChanged();
+  return res.data;
 }
 
 export async function copyPlanWeek(week) {

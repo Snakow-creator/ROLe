@@ -17,6 +17,8 @@ class User(Document):
     level: int = Field(default=1, gt=0)
     xp: float = Field(default=0, ge=0)
     Spoints: float = Field(default=0, ge=0)
+    Qpoints: int = Field(default=0, ge=0, strict=True, description="Сезонные очки")
+    Tpoints: int = Field(default=0, ge=0, strict=True, description="Донатные очки")
     # подряд завершенные дни
     days_streak: int = Field(default=0, ge=0)
     last_streak: str | datetime = datetime.now(timezone.utc)

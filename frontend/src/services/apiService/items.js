@@ -1,9 +1,11 @@
 import api from "./api";
+import { notifyBalanceChanged } from "./profile";
 
 
 export const fetchBuyItem = async (id) => {
   try {
     const res = await api.put(`/buy/item/${id}`);
+    notifyBalanceChanged();
     return res
   } catch (error) {
     console.log("свааааага")
